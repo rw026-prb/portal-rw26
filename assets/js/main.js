@@ -1,3 +1,12 @@
+// Tambahkan fungsi pembersih di bagian atas
+const clearContainers = () => {
+  const ids = ["heroCarouselInner", "announcementContainer", "newsContainer", "facilitiesContainer", "organizationContainer"];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<div class="text-center py-5">Memuat data...</div>';
+  });
+};
+
 (() => {
   "use strict";
 
@@ -295,13 +304,18 @@
       });
     });
   };
+  // Revisi fungsi renderContent
   const renderContent = (data) => {
-    renderHero(data.himbauan || fallback.himbauan);
-    renderAnnouncements(data.announcements || fallback.announcements);
-    renderNews(data.news || fallback.news);
-    renderFacilities(data.facilities || fallback.facilities);
-    renderOrganization(data.organization || fallback.organization);
-  };
+  // Bersihkan sebelum render
+  clearContainers();
+
+  // Render hanya jika data ada
+  if (data.himbauan) renderHero(data.himbauan);
+  if (data.announcements) renderAnnouncements(data.announcements);
+  if (data.news) renderNews(data.news);
+  if (data.facilities) renderFacilities(data.facilities);
+  if (data.organization) renderOrganization(data.organization);
+};
 
   window.addEventListener("scroll", handleScroll, { passive: true });
   handleScroll();
