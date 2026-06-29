@@ -280,7 +280,21 @@
         : 'Lihat semua <i class="bi bi-arrow-right ms-2"></i>';
     };
   };
-
+  const bindMoreButtons = (container) => {
+    if (!container) return;
+    const buttons = container.querySelectorAll('[data-more-toggle]');
+    buttons.forEach((button) => {
+      button.addEventListener("click", function () {
+        const textContainer = this.previousElementSibling;
+        if (textContainer && textContainer.classList.contains("expandable-text")) {
+          const isExpanded = textContainer.classList.toggle("expanded");
+          this.innerHTML = isExpanded
+            ? '<span>Tampilkan lebih sedikit</span><i class="bi bi-chevron-up"></i>'
+            : '<span>Tampilkan lebih banyak</span><i class="bi bi-chevron-down"></i>';
+        }
+      });
+    });
+  };
   const renderContent = (data) => {
     renderHero(data.himbauan || fallback.himbauan);
     renderAnnouncements(data.announcements || fallback.announcements);
