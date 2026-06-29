@@ -132,7 +132,23 @@
     if (!data.ok) throw new Error(data.message || "Data portal tidak dapat dimuat.");
     return data;
   };
-
+  const getApi = async (action) => {
+    if (!cfg.APPS_SCRIPT_URL?.startsWith("https://script.google.com/")) {
+      throw new Error("APPS_SCRIPT_URL belum dikonfigurasi.");
+    }
+    
+    // Tambahkan parameter action ke endpoint
+    const url = `${cfg.APPS_SCRIPT_URL}?action=${encodeURIComponent(action)}`;
+    
+    const response = await fetch(url, {
+      method: "GET",
+      redirect: "follow"
+    });
+    
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.message || "Data portal tidak dapat dimuat.");
+    return data;
+  };
   const renderHero = (items) => {
     const active = items.filter((item) => imageUrl(item, "w2000"));
     if (!active.length) return;
@@ -286,8 +302,14 @@
 
   backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
   document.getElementById("year").textContent = new Date().getFullYear();
+  // Tampilkan data fallback terlebih dahulu agar layar tidak kosong
   renderContent(fallback);
-  postApi(cfg.PUBLIC_ACTION || "publicContent")
-    .then(renderContent)
+  
+  // Tarik data asli menggunakan metode GET
+  getApi(cfg.PUBLIC_ACTION || "publicContent")
+    .then((data) => {
+      // Timpa data fallback dengan data dari Apps Script
+      renderContent(data);
+    })
     .catch((error) => console.warn("Memakai data fallback:", error.message));
 })();
