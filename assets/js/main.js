@@ -325,14 +325,40 @@ const clearContainers = () => {
 
   backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
   document.getElementById("year").textContent = new Date().getFullYear();
-  // Tampilkan data fallback terlebih dahulu agar layar tidak kosong
-  //renderContent(fallback);
   
-  // Tarik data asli menggunakan metode GET
+  // ... (biarkan fungsi-fungsi di atasnya tetap sama)
+
+  const renderContent = (data) => {
+    // 1. Panggil fungsi pembersih agar tampilan kosong/loading dulu
+    clearContainers(); 
+
+    // 2. Render data (menggunakan fallback hanya jika data kosong/null)
+    renderHero(data.himbauan || fallback.himbauan);
+    renderAnnouncements(data.announcements || fallback.announcements);
+    renderNews(data.news || fallback.news);
+    renderFacilities(data.facilities || fallback.facilities);
+    renderOrganization(data.organization || fallback.organization);
+  };
+
+  // ... (kode event listener scroll, navbar, dll tetap sama)
+
+  backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  // ALUR BERSIH:
+  // 1. Tampilkan data fallback sesaat (opsional, bisa langsung panggil getApi)
+  renderContent(fallback);
+  
+  // 2. Tarik data asli
   getApi(cfg.PUBLIC_ACTION || "publicContent")
     .then((data) => {
-      // Timpa data fallback dengan data dari Apps Script
+      // 3. Timpa dengan data dari Spreadsheet
       renderContent(data);
     })
-    .catch((error) => console.warn("Memakai data fallback:", error.message));
+    .catch((error) => {
+      console.warn("API gagal, tetap menggunakan data fallback:", error.message);
+      // Jika gagal, kita tetap butuh memanggil renderContent(fallback) 
+      // untuk menghapus tulisan "Memuat data..." dan menampilkan data fallback
+      renderContent(fallback); 
+    });
 })();
