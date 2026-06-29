@@ -155,7 +155,9 @@ footer strong { color: var(--ink); }
   .hero { min-height:auto; padding:135px 0 110px; }
   .hero h1 { font-size:clamp(3.2rem,11vw,4.8rem); }
   .hero-card { max-width:600px; transform:none; }
-  .quick-links { margin-top:-45px; }
+  /* Tombol quick-links sudah dihapus dari HTML, 
+     baris ini tidak diperlukan lagi atau buat nilainya 0 */
+  .quick-links { display: none !important; }
   .section-pad { padding:80px 0; }
 }
 @media (max-width: 767.98px) {
@@ -175,10 +177,30 @@ footer strong { color: var(--ink); }
   .contact-panel { grid-template-columns:1fr; }
   .map-placeholder { min-height:220px; }
   .hero-slider { padding-top: 74px; }
-  .hero-slider .carousel-item img { height: 430px; object-position: center; }
+  .hero-slider .carousel-item img { 
+      height: 250px;       /* Tinggi lebih pas untuk HP */
+      object-fit: cover;   /* Memastikan gambar proporsional */
+      object-position: center; 
+  }
   .slider-control { width: 40px; height: 40px; font-size: 1rem; }
-  .hero-slider .carousel-control-prev, .hero-slider .carousel-control-next { width: 15%; }
-  .hero-slider .carousel-indicators { bottom: 18px; }
+  /* Memastikan latar belakang tombol navigasi slider benar-benar transparan */
+.carousel-control-prev, 
+.carousel-control-next {
+    background: transparent !important;
+    opacity: 0.8; /* Sedikit transparan saat tidak disentuh */
+}
+
+.carousel-control-prev:hover, 
+.carousel-control-next:hover {
+    opacity: 1;   /* Lebih jelas saat disentuh/hover */
+}
+
+/* Mengatur ukuran ikon panah */
+.carousel-control-prev i, 
+.carousel-control-next i {
+    font-size: 2.5rem; /* Ukuran ikon panah */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Memberi bayangan agar tetap terlihat di atas gambar */
+}
 }
 @media (max-width: 420px) {
   .hero-meta > div:last-child { display:none; }
