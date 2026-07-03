@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Posyandu RW 026</title>
+  <desc id="desc">Ilustrasi pelayanan kesehatan warga di posyandu.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eff6ff"/>
+      <stop offset=".55" stop-color="#d9f8f2"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <rect x="86" y="132" width="1028" height="548" rx="42" fill="#ffffff" opacity=".88"/>
+  <rect x="144" y="208" width="420" height="292" rx="24" fill="#e0f2fe"/>
+  <rect x="626" y="208" width="320" height="320" rx="28" fill="#d9f8f2"/>
+  <circle cx="786" cy="332" r="78" fill="#0f766e"/>
+  <rect x="765" y="262" width="42" height="140" rx="18" fill="#ffffff"/>
+  <rect x="716" y="311" width="140" height="42" rx="18" fill="#ffffff"/>
+  <g transform="translate(210 286)">
+    <circle cx="82" cy="50" r="46" fill="#f59e0b"/>
+    <rect x="37" y="106" width="90" height="142" rx="35" fill="#0f766e"/>
+    <circle cx="220" cy="52" r="46" fill="#2563eb"/>
+    <rect x="176" y="108" width="88" height="140" rx="35" fill="#16a34a"/>
+  </g>
+  <g transform="translate(658 560)">
+    <rect x="0" y="0" width="340" height="32" rx="16" fill="#bfdbfe"/>
+    <rect x="0" y="54" width="260" height="24" rx="12" fill="#99f6e4"/>
+  </g>
+  <text x="94" y="104" fill="#0b4f49" font-family="Arial, sans-serif" font-size="44" font-weight="700">Posyandu RW 026</text>
+  <text x="96" y="160" fill="#475569" font-family="Arial, sans-serif" font-size="26">Layanan kesehatan keluarga dekat dari rumah.</text>
+</svg>
