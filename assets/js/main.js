@@ -111,6 +111,20 @@
     return div.innerHTML;
   };
 
+  const sanitizeHtml = (html) => {
+    const div = document.createElement("div");
+    div.innerHTML = html ?? "";
+    div.querySelectorAll("script, iframe, style, object, embed, form, input").forEach(el => el.remove());
+    div.querySelectorAll("*").forEach(el => {
+      [...el.attributes].forEach(attr => {
+        if (attr.name.startsWith("on") || (attr.name === "href" && attr.value.startsWith("javascript:"))) {
+          el.removeAttribute(attr.name);
+        }
+      });
+    });
+    return div.innerHTML;
+  };
+
   const plainText = (value) => {
     const div = document.createElement("div");
     div.innerHTML = value ?? "";
@@ -150,14 +164,15 @@
   };
 
   const expandableText = (text, length, className = "summary-text") => {
-    const value = plainText(text);
-    if (!value) return `<p class="${className}">Informasi detail akan diperbarui oleh pengurus.</p>`;
-    if (value.length <= length) return `<p class="${className}">${esc(value)}</p>`;
+    const raw = String(text || "").trim();
+    if (!raw) return `<p class="${className}">Informasi detail akan diperbarui oleh pengurus.</p>`;
+    const plain = plainText(raw);
+    if (plain.length <= length) return `<div class="${className}">${sanitizeHtml(raw)}</div>`;
     return `
-      <p class="${className} expandable-text">
-        <span class="summary-short">${esc(value.slice(0, length).trim())}...</span>
-        <span class="summary-full">${esc(value)}</span>
-      </p>
+      <div class="${className} expandable-text">
+        <span class="summary-short">${esc(plain.slice(0, length).trim())}...</span>
+        <span class="summary-full">${sanitizeHtml(raw)}</span>
+      </div>
       <button class="more-link" type="button" data-more-toggle>
         <span>Tampilkan lebih banyak</span><i class="bi bi-chevron-down"></i>
       </button>`;
