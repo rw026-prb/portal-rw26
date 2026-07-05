@@ -914,6 +914,7 @@ p {
 .news-main-body {
   font-size: 1rem;
   line-height: 1.75;
+  text-align: justify;
   color: #334155;
 }
 
