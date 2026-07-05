@@ -259,7 +259,11 @@
       return;
     }
 
-    const sorted = [...active].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+    const sorted = [...active].sort((a, b) => {
+      const dateA = new Date(a.tanggal).getTime() || 0;
+      const dateB = new Date(b.tanggal).getTime() || 0;
+      return dateB - dateA;
+    });
     const accentColors = ["#e11d48", "#f59e0b", "#2563eb", "#eab308", "#16a34a"];
 
     sidebar.innerHTML = sorted.map((item, idx) => `
