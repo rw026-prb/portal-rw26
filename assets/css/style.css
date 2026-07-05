@@ -1229,6 +1229,18 @@ p {
   color: #cbd5e1;
 }
 
+[data-theme="dark"] .navbar-brand {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .navbar-brand small {
+  color: var(--muted);
+}
+
+[data-theme="dark"] .section-header h2 {
+  color: var(--ink);
+}
+
 [data-theme="dark"] .bg-white,
 [data-theme="dark"] .info-card,
 [data-theme="dark"] .news-card,
