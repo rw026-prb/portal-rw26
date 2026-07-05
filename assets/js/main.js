@@ -259,11 +259,25 @@
       return;
     }
 
-    const sorted = [...active].sort((a, b) => {
-      const dateA = new Date(a.tanggal).getTime() || 0;
-      const dateB = new Date(b.tanggal).getTime() || 0;
-      return dateB - dateA;
-    });
+    const getDate = (item) => {
+      const raw = item.tanggal || item.tgl || item.date || item.tanggal_terbit || "";
+      if (!raw) return 0;
+      const d = new Date(raw);
+      if (!Number.isNaN(d.getTime())) return d.getTime();
+      const parts = String(raw).split(/[/\-.]/);
+      if (parts.length === 3) {
+        const [a, b, c] = parts.map(Number);
+        if (!isNaN(a) && !isNaN(b) && !isNaN(c)) {
+          const y = c > 31 ? c : a > 31 ? c : a;
+          const m = c > 31 ? b : a > 31 ? b : c > 12 ? b : a;
+          const day = c > 31 ? a : a > 31 ? b : c;
+          return new Date(y, m - 1, day).getTime() || 0;
+        }
+      }
+      return 0;
+    };
+
+    const sorted = [...active].sort((a, b) => getDate(b) - getDate(a));
     const accentColors = ["#e11d48", "#f59e0b", "#2563eb", "#eab308", "#16a34a"];
 
     sidebar.innerHTML = sorted.map((item, idx) => `
