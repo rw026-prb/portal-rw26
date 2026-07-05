@@ -310,7 +310,7 @@
       const list = Array.isArray(org?.[group.key]) ? org[group.key].filter(isActive) : [];
       return `
         <section class="org-group" aria-labelledby="org-${esc(group.key)}">
-          <div class="org-group-heading">
+          <div class="org-group-heading" data-toggle="org-accordion">
             <span><i class="bi ${group.icon}"></i></span>
             <div>
               <h3 id="org-${esc(group.key)}">${esc(group.title)}</h3>
@@ -385,6 +385,13 @@
           : '<i class="bi bi-chevron-up"></i> Tampilkan Ringkas';
       });
     }
+
+    document.addEventListener("click", (event) => {
+      const heading = event.target.closest("[data-toggle=\"org-accordion\"]");
+      if (heading) {
+        heading.closest(".org-group")?.classList.toggle("is-expanded");
+      }
+    });
 
     navLinks.forEach((link) => {
       link.addEventListener("click", () => {
