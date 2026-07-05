@@ -399,6 +399,12 @@
     }
   };
 
+  const fetchWithTimeout = (url, ms = 10000) => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
+  };
+
   const loadPublicContent = () => {
     if (!cfg.APPS_SCRIPT_URL) {
       renderContent(fallback);
@@ -406,13 +412,51 @@
     }
 
     const action = encodeURIComponent(cfg.PUBLIC_ACTION || "publicContent");
-    fetch(`${cfg.APPS_SCRIPT_URL}?action=${action}`)
+    fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=${action}`)
       .then((res) => {
         if (!res.ok) throw new Error("Gagal memuat data publik.");
         return res.json();
       })
       .then((data) => renderContent(data?.ok ? data : fallback))
       .catch(() => renderContent(fallback));
+  };
+
+  const initDarkMode = () => {
+    const toggle = document.getElementById("darkModeToggle");
+    const icon = toggle?.querySelector("i");
+    const stored = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = stored ? stored === "dark" : prefersDark;
+
+    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+    if (icon) icon.className = isDark ? "bi bi-sun-fill" : "bi bi-moon-stars-fill";
+
+    toggle?.addEventListener("click", () => {
+      const now = document.documentElement.getAttribute("data-theme") === "dark";
+      document.documentElement.setAttribute("data-theme", now ? "light" : "dark");
+      localStorage.setItem("theme", now ? "light" : "dark");
+      if (icon) icon.className = now ? "bi bi-moon-stars-fill" : "bi bi-sun-fill";
+    });
+  };
+
+  const initScrollReveal = () => {
+    if (!("IntersectionObserver" in window)) return;
+    const els = document.querySelectorAll(
+      ".section-header, .info-card, .news-card, .facility-card, .org-group, .gallery-grid, .contact-list, .map-box"
+    );
+    els.forEach((el) => el.classList.add("reveal"));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+    );
+    els.forEach((el) => observer.observe(el));
   };
 
   window.addEventListener("load", () => {
@@ -428,6 +472,8 @@
     initInteractions();
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
+    initDarkMode();
+    initScrollReveal();
     loadPublicContent();
   });
 })();

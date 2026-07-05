@@ -14,9 +14,9 @@
 </head>
 <body>
   <div id="preloader" aria-live="polite">
-      <div class="loader-wrapper">
-        <img src="assets/logo/logo-rw.png" alt="RW 026" class="loader-logo" width="86" height="86">
-        <h4>Portal Digital RW 026</h4>
+    <div class="loader-wrapper">
+      <img src="assets/logo/logo-rw.png" alt="RW 026" class="loader-logo" width="86" height="86">
+      <h4>Portal Digital RW 026</h4>
       <p>Memuat informasi warga...</p>
     </div>
   </div>
@@ -42,6 +42,11 @@
           <li class="nav-item"><a class="nav-link" href="#fasilitas">Fasilitas</a></li>
           <li class="nav-item"><a class="nav-link" href="#pengurus">Pengurus</a></li>
           <li class="nav-item ms-lg-2"><a class="btn btn-primary-soft" href="#kontak"><i class="bi bi-telephone-fill"></i> Kontak</a></li>
+          <li class="nav-item ms-lg-1">
+            <button class="btn btn-darkmode" type="button" id="darkModeToggle" aria-label="Mode gelap">
+              <i class="bi bi-moon-stars-fill"></i>
+            </button>
+          </li>
         </ul>
       </div>
     </div>
@@ -58,11 +63,6 @@
             <a href="#pengumuman" class="btn btn-success btn-lg"><i class="bi bi-megaphone-fill"></i> Lihat Pengumuman</a>
             <a href="#kontak" class="btn btn-outline-success btn-lg"><i class="bi bi-whatsapp"></i> Hubungi Pengurus</a>
           </div>
-          <!-- <div class="hero-counter" aria-label="Ringkasan warga">
-            <div><strong id="totalKK">620</strong><span>Kepala Keluarga</span></div>
-            <div><strong id="totalWarga">1950</strong><span>Jumlah Warga</span></div>
-            <div><strong id="totalRT">10</strong><span>RT Aktif</span></div>
-          </div> -->
         </div>
         <div class="hero-slideshow-wrap">
           <div class="hero-panel">
@@ -87,30 +87,6 @@
       </div>
     </section>
 
-    <!-- <section class="quick-menu" aria-label="Akses cepat">
-      <div class="container">
-        <div class="quick-grid">
-          <a href="#pengumuman" class="quick-card"><i class="bi bi-megaphone-fill"></i><span>Pengumuman</span></a>
-          <a href="#layanan" class="quick-card"><i class="bi bi-file-earmark-text-fill"></i><span>Layanan</span></a>
-          <a href="#berita" class="quick-card"><i class="bi bi-newspaper"></i><span>Berita</span></a>
-          <a href="#fasilitas" class="quick-card"><i class="bi bi-buildings"></i><span>Fasilitas</span></a>
-          <a href="#pengurus" class="quick-card"><i class="bi bi-people-fill"></i><span>Pengurus</span></a>
-          <a href="#kontak" class="quick-card"><i class="bi bi-geo-alt-fill"></i><span>Kontak</span></a>
-        </div>
-      </div>
-    </section> -->
-
-    <!-- <section class="statistics" aria-label="Statistik lingkungan">
-      <div class="container">
-        <div class="row g-3 g-lg-4">
-          <div class="col-6 col-lg-3"><div class="stat-card"><i class="bi bi-people-fill"></i><strong id="statWarga">1950</strong><span>Jumlah Warga</span></div></div>
-          <div class="col-6 col-lg-3"><div class="stat-card"><i class="bi bi-house-door-fill"></i><strong id="statKK">620</strong><span>Kepala Keluarga</span></div></div>
-          <div class="col-6 col-lg-3"><div class="stat-card"><i class="bi bi-calendar-event-fill"></i><strong id="statAgenda">18</strong><span>Kegiatan</span></div></div>
-          <div class="col-6 col-lg-3"><div class="stat-card"><i class="bi bi-shield-check"></i><strong id="statRT">10</strong><span>RT Aktif</span></div></div>
-        </div>
-      </div>
-    </section> -->
-
     <section id="pengumuman" class="section-pad bg-white">
       <div class="container">
         <div class="section-header">
@@ -124,24 +100,6 @@
         <div class="row g-4" id="announcementList"></div>
       </div>
     </section>
-
-    <!-- <section id="layanan" class="section-pad">
-      <div class="container">
-        <div class="section-header centered">
-          <div>
-            <span class="section-badge">Layanan Digital</span>
-            <h2>Pelayanan Warga</h2>
-            <p>Akses informasi layanan yang paling sering dibutuhkan warga.</p>
-          </div>
-        </div>
-        <div class="row g-4">
-          <div class="col-md-6 col-lg-3"><article class="service-card"><i class="bi bi-file-earmark-text-fill"></i><h3>Surat Pengantar</h3><p>Informasi pengajuan surat untuk kebutuhan administrasi warga.</p></article></div>
-          <div class="col-md-6 col-lg-3"><article class="service-card"><i class="bi bi-chat-left-dots-fill"></i><h3>Pengaduan</h3><p>Sampaikan keluhan lingkungan dan aspirasi kepada pengurus.</p></article></div>
-          <div class="col-md-6 col-lg-3"><article class="service-card"><i class="bi bi-calendar-check-fill"></i><h3>Agenda RW</h3><p>Lihat jadwal kegiatan sosial, keamanan, dan kebersihan lingkungan.</p></article></div>
-          <div class="col-md-6 col-lg-3"><article class="service-card"><i class="bi bi-credit-card-fill"></i><h3>Iuran Warga</h3><p>Informasi iuran dan kanal pembayaran dapat diaktifkan kemudian.</p></article></div>
-        </div>
-      </div>
-    </section> -->
 
     <section id="berita" class="section-pad bg-white">
       <div class="container">
