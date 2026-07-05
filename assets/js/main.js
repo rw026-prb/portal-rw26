@@ -186,10 +186,14 @@
   const emptyMarkup = (label) => `<div class="col-12"><div class="empty-state">${esc(label)}</div></div>`;
 
   const clearContainers = () => {
-    ["announcementList", "newsList", "facilityList"].forEach((id) => {
+    ["announcementList", "facilityList"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = loadingMarkup();
     });
+    const newsSidebar = document.getElementById("newsSidebar");
+    if (newsSidebar) newsSidebar.innerHTML = "";
+    const newsMain = document.getElementById("newsMainContent");
+    if (newsMain) newsMain.innerHTML = loadingMarkup("Memuat berita...");
     const org = document.getElementById("orgList");
     if (org) org.innerHTML = '<div class="loading-state">Memuat struktur pengurus...</div>';
   };
@@ -244,32 +248,63 @@
   };
 
   const renderNews = (items = []) => {
-    const target = document.getElementById("newsList");
-    if (!target) return;
+    const sidebar = document.getElementById("newsSidebar");
+    const mainContent = document.getElementById("newsMainContent");
+    if (!sidebar || !mainContent) return;
 
     const active = (items.length ? items : fallback.news).filter(isActive);
     if (!active.length) {
-      target.innerHTML = emptyMarkup("Belum ada berita aktif.");
+      mainContent.innerHTML = emptyMarkup("Belum ada berita aktif.");
+      sidebar.innerHTML = "";
       return;
     }
 
-    target.innerHTML = active.map((item, idx) => {
+    const sorted = [...active].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+    const accentColors = ["#e11d48", "#f59e0b", "#2563eb", "#eab308", "#16a34a"];
+
+    sidebar.innerHTML = sorted.map((item, idx) => `
+      <div class="news-sidebar-item ${idx === 0 ? "active" : ""}" data-index="${idx}">
+        <span class="news-accent-bar" style="background:${accentColors[idx % accentColors.length]}"></span>
+        <div class="news-sidebar-content">
+          <span class="news-sidebar-date">${esc(formatDate(item.tanggal))}</span>
+          <h4>${esc(item.judul || "Berita RW 026")}</h4>
+        </div>
+      </div>`).join("");
+
+    const renderMainArticle = (item, idx) => {
       const img = imageUrl(item, "w1200") || fallback.himbauan[idx % fallback.himbauan.length].imageUrl;
-      return `
-        <div class="col-md-6 col-lg-4">
-          <article class="news-card">
-            <div class="news-thumb">
-              <img src="${esc(img)}" alt="${esc(item.judul || "Berita RW 026")}">
-              <span class="news-category">${esc(item.kategori || "Berita")}</span>
-            </div>
-            <div class="news-content">
-              <span class="news-date"><i class="bi bi-calendar2-week"></i>${esc(formatDate(item.tanggal, true))}</span>
-              <h3>${esc(item.judul || "Berita RW 026")}</h3>
-              ${expandableText(getText(item, ["ringkasan", "isi", "deskripsi", "konten"]), 135)}
-            </div>
-          </article>
-        </div>`;
-    }).join("");
+      const bodyText = getText(item, ["isi", "konten", "ringkasan", "deskripsi"]);
+      mainContent.innerHTML = `
+        <article class="news-main-article">
+          <div class="news-main-meta">
+            <span class="news-main-category" style="background:${accentColors[idx % accentColors.length]}">${esc(item.kategori || "Berita")}</span>
+            <span class="news-main-date"><i class="bi bi-calendar2-week"></i> ${esc(formatDate(item.tanggal))}</span>
+          </div>
+          <h3 class="news-main-title">${esc(item.judul || "Berita RW 026")}</h3>
+          <div class="news-main-image">
+            <img src="${esc(img)}" alt="${esc(item.judul || "Berita RW 026")}">
+          </div>
+          <div class="news-main-body">
+            ${sanitizeHtml(bodyText || "Informasi detail akan diperbarui oleh pengurus.")}
+          </div>
+        </article>`;
+    };
+
+    renderMainArticle(sorted[0], 0);
+
+    const handleSidebarClick = (e) => {
+      const item = e.target.closest(".news-sidebar-item");
+      if (!item) return;
+      const idx = parseInt(item.dataset.index, 10);
+      if (item.classList.contains("active")) return;
+      sidebar.querySelectorAll(".news-sidebar-item").forEach(el => el.classList.remove("active"));
+      item.classList.add("active");
+      renderMainArticle(sorted[idx], idx);
+    };
+
+    sidebar.removeEventListener("click", sidebar._newsClick);
+    sidebar._newsClick = handleSidebarClick;
+    sidebar.addEventListener("click", handleSidebarClick);
   };
 
   const renderFacilities = (items = []) => {
@@ -449,7 +484,7 @@
   const initScrollReveal = () => {
     if (!("IntersectionObserver" in window)) return;
     const els = document.querySelectorAll(
-      ".section-header, .info-card, .news-card, .facility-card, .org-group, .gallery-grid, .contact-list, .map-box"
+      ".section-header, .info-card, .news-sidebar, .news-main-article, .facility-card, .org-group, .gallery-grid, .contact-list, .map-box"
     );
     els.forEach((el) => el.classList.add("reveal"));
     const observer = new IntersectionObserver(
