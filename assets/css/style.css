@@ -142,24 +142,14 @@ p {
   text-align: center;
 }
 
-.loader-logo,
-.brand-logo,
-.footer-logo {
-  display: inline-grid;
-  place-items: center;
-  color: #fff;
-  background: linear-gradient(135deg, var(--primary), var(--green));
-  font-family: "Manrope", Arial, sans-serif;
-  font-weight: 800;
-  box-shadow: 0 14px 30px rgba(15, 118, 110, .22);
-}
-
 .loader-logo {
+  display: block;
   width: 86px;
   height: 86px;
   margin: 0 auto 18px;
   border-radius: 24px;
-  font-size: 36px;
+  object-fit: cover;
+  box-shadow: 0 14px 30px rgba(15, 118, 110, .22);
   animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -197,7 +187,7 @@ p {
   width: 50px;
   height: 50px;
   border-radius: 16px;
-  font-size: 22px;
+  object-fit: cover;
   flex: 0 0 auto;
 }
 
@@ -954,7 +944,7 @@ p {
   width: 54px;
   height: 54px;
   border-radius: 16px;
-  font-size: 22px;
+  object-fit: cover;
 }
 
 .social-icons {
