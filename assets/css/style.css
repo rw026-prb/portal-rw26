@@ -1522,6 +1522,20 @@ p {
   padding: 20px;
 }
 
+.kas-updated-at {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 24px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.kas-updated-at i {
+  font-size: 0.9rem;
+}
+
 .kas-empty {
   display: none;
   flex-direction: column;
@@ -2093,10 +2107,13 @@ p {
   background: var(--surface);
   border-color: var(--line);
 }
-[data-theme="dark"] .kas-select {
+[data-theme="dark"] . kas-select {
   background: var(--surface);
   border-color: var(--line);
   color: var(--ink);
+}
+[data-theme="dark"] .kas-updated-at {
+  color: var(--muted);
 }
 
 [data-theme="dark"] .hero-section {

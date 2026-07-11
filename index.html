@@ -105,6 +105,7 @@
 
     <section class="statistics" aria-label="Statistik lingkungan">
       <div class="container">
+        <h2 class="section-header centered" style="margin-bottom: 34px;">Statistik Warga</h2>
         <div class="row g-3 g-lg-4" id="statsContainer"></div>
       </div>
     </section>
@@ -237,6 +238,9 @@
         <div id="kasLoadingState" class="kas-loading" style="display:none;">
           <div class="spinner-border text-primary" role="status"></div>
           <span>Memuat data keuangan...</span>
+        </div>
+        <div id="kasUpdatedAt" class="kas-updated-at" style="display:none;">
+          <i class="bi bi-clock"></i> Data diperbarui pada: <span id="kasUpdatedTime"></span>
         </div>
         <div id="kasReportBox" style="display:none;">
           <div class="kas-summary-grid">

@@ -663,6 +663,8 @@
 
     if (reportBox) reportBox.style.display = "none";
     if (emptyState) emptyState.style.display = "none";
+    const updatedAtEl = document.getElementById("kasUpdatedAt");
+    if (updatedAtEl) updatedAtEl.style.display = "none";
     if (loading) loading.style.display = "flex";
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Memuat'; }
 
@@ -686,6 +688,12 @@
           return;
         }
         if (reportBox) reportBox.style.display = "block";
+        const updatedTimeEl = document.getElementById("kasUpdatedTime");
+        if (updatedAtEl && updatedTimeEl) {
+          const d = data.updatedAt ? new Date(data.updatedAt) : new Date();
+          updatedTimeEl.textContent = d.toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+          updatedAtEl.style.display = "flex";
+        }
         const fmt = (n) => "Rp " + Number(n).toLocaleString("id-ID");
         const sa = document.getElementById("kasSaldoAwal");
         const tm = document.getElementById("kasTotalMasuk");
