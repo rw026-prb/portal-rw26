@@ -1,5 +1,6 @@
 (() => {
   "use strict";
+  const pageLoadStart = Date.now();
 
   const cfg = window.RW26_CONFIG || {};
   const navbar = document.getElementById("mainNav");
@@ -8,7 +9,11 @@
   const sections = [...document.querySelectorAll("main section[id]")];
   const collapseElement = document.getElementById("navbarMenu");
   const year = document.getElementById("year");
-  const showAllButton = document.getElementById("showAllAnnouncements");
+  let galleryData = [];
+  let heroData = [];
+  let lightboxSource = [];
+  let currentAlbum = 0;
+  let currentPhoto = 0;
 
   const fallback = {
     himbauan: [
@@ -84,13 +89,36 @@
         { nama: "Sekretaris RW", jabatan: "Sekretaris" },
         { nama: "Bendahara RW", jabatan: "Bendahara" }
       ],
+      posyandu: [
+        { nama: "Koordinator Posyandu", jabatan: "Koordinator" }
+      ],
+      pkk: [
+        { nama: "Ketua PKK", jabatan: "Ketua" }
+      ],
       "bank-sampah": [
         { nama: "Koordinator Bank Sampah", jabatan: "Koordinator" }
       ],
       pokmas: [
         { nama: "Koordinator Pokmas", jabatan: "Koordinator" }
       ]
-    }
+    },
+    gallery: [
+      {
+        nama: "Kegiatan RW 026",
+        deskripsi: "Dokumentasi kegiatan warga RW 026",
+        photos: [
+          { imageUrl: "assets/images/slide-kerja-bakti.svg", name: "Kerja Bakti" },
+          { imageUrl: "assets/images/slide-posyandu.svg", name: "Posyandu" },
+          { imageUrl: "assets/images/slide-pelayanan.svg", name: "Pelayanan" }
+        ]
+      }
+    ],
+    statistik: [
+      { nama: "Jumlah Warga", nilai: 1950 },
+      { nama: "Kepala Keluarga", nilai: 620 },
+      { nama: "Kegiatan", nilai: 0 },
+      { nama: "RT Aktif", nilai: 10 }
+    ]
   };
 
   const icons = {
@@ -148,9 +176,20 @@
     return "";
   };
 
+  const parseDate = (value) => {
+    if (typeof value === "string") {
+      const m = value.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      if (m) {
+        const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+        if (!Number.isNaN(d.getTime())) return d;
+      }
+    }
+    return new Date(value);
+  };
+
   const formatDate = (value, withReadTime = false) => {
     if (!value) return "TERBARU";
-    const date = new Date(value);
+    const date = parseDate(value);
     const formatted = Number.isNaN(date.getTime())
       ? String(value).toUpperCase()
       : new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric" }).format(date).toUpperCase();
@@ -186,16 +225,22 @@
   const emptyMarkup = (label) => `<div class="col-12"><div class="empty-state">${esc(label)}</div></div>`;
 
   const clearContainers = () => {
-    ["announcementList", "facilityList"].forEach((id) => {
+    ["facilityList"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = loadingMarkup();
     });
+    const announceSidebar = document.getElementById("announcementSidebar");
+    if (announceSidebar) announceSidebar.innerHTML = "";
+    const announceMain = document.getElementById("announcementMainContent");
+    if (announceMain) announceMain.innerHTML = loadingMarkup("Memuat pengumuman...");
     const newsSidebar = document.getElementById("newsSidebar");
     if (newsSidebar) newsSidebar.innerHTML = "";
     const newsMain = document.getElementById("newsMainContent");
     if (newsMain) newsMain.innerHTML = loadingMarkup("Memuat berita...");
     const org = document.getElementById("orgList");
     if (org) org.innerHTML = '<div class="loading-state">Memuat struktur pengurus...</div>';
+    const gallery = document.getElementById("galleryContainer");
+    if (gallery) gallery.innerHTML = loadingMarkup("Memuat galeri...");
   };
 
   const renderHero = (items = fallback.himbauan) => {
@@ -204,14 +249,12 @@
     if (!slides || !indicators) return;
 
     const activeItems = (items.length ? items : fallback.himbauan).filter(Boolean);
+    heroData = activeItems;
     slides.innerHTML = activeItems.map((item, idx) => `
       <div class="carousel-item ${idx === 0 ? "active" : ""}">
         <article class="hero-slide">
           <img src="${esc(imageUrl(item, "w2000") || fallback.himbauan[idx % fallback.himbauan.length].imageUrl)}" alt="${esc(item.judul || "Informasi RW 026")}">
-          <div class="hero-caption">
-            <span>${esc(item.kategori || "Info RW")}</span>
-            <h2>${esc(item.judul || "Informasi RW 026")}</h2>
-          </div>
+
         </article>
       </div>`).join("");
 
@@ -220,31 +263,64 @@
   };
 
   const renderAnnouncements = (items = []) => {
-    const target = document.getElementById("announcementList");
-    if (!target) return;
+    const sidebar = document.getElementById("announcementSidebar");
+    const mainContent = document.getElementById("announcementMainContent");
+    if (!sidebar || !mainContent) return;
 
     const active = (items.length ? items : fallback.announcements).filter(isActive);
     if (!active.length) {
-      target.innerHTML = emptyMarkup("Belum ada pengumuman aktif.");
-      if (showAllButton) showAllButton.classList.add("d-none");
+      mainContent.innerHTML = emptyMarkup("Belum ada pengumuman aktif.");
+      sidebar.innerHTML = "";
       return;
     }
 
-    target.innerHTML = active.map((item, idx) => `
-      <div class="col-md-6 col-lg-4 announcement-item ${idx > 2 ? "d-none extra-announcement" : ""}">
-        <article class="info-card">
-          <div class="card-icon ${iconColors[idx % iconColors.length]}"><i class="bi ${icons[item.kategori] || "bi-megaphone"}"></i></div>
-          <span class="info-date"><i class="bi bi-calendar2-week"></i>${esc(formatDate(item.tanggal))}</span>
-          <h3>${esc(item.judul || "Pengumuman RW")}</h3>
-          ${expandableText(getText(item, ["ringkasan", "isi", "deskripsi", "konten"]), 145)}
-        </article>
+    const getDate = (item) => {
+      const raw = item.tanggal || "";
+      if (!raw) return 0;
+      const d = parseDate(raw);
+      return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+    };
+
+    const sorted = [...active].sort((a, b) => getDate(b) - getDate(a));
+    const accentColors = ["#e11d48", "#f59e0b", "#2563eb", "#eab308", "#16a34a"];
+
+    sidebar.innerHTML = sorted.map((item, idx) => `
+      <div class="news-sidebar-item ${idx === 0 ? "active" : ""}" data-index="${idx}">
+        <span class="news-accent-bar" style="background:${accentColors[idx % accentColors.length]}"></span>
+        <div class="news-sidebar-content">
+          <span class="news-sidebar-date">${esc(formatDate(item.tanggal))}</span>
+          <h4>${esc(item.judul || "Pengumuman RW")}</h4>
+        </div>
       </div>`).join("");
 
-    if (showAllButton) {
-      showAllButton.classList.toggle("d-none", active.length <= 3);
-      showAllButton.dataset.expanded = "false";
-      showAllButton.innerHTML = '<i class="bi bi-grid-3x3-gap-fill"></i> Lihat Semua';
-    }
+    const renderMainArticle = (item, idx) => {
+      const bodyText = getText(item, ["ringkasan", "isi", "deskripsi", "konten"]);
+      mainContent.innerHTML = `
+        <article class="info-card" style="height:auto">
+          <div class="card-icon ${iconColors[idx % iconColors.length]}">
+            <i class="bi ${icons[item.kategori] || "bi-megaphone"}"></i>
+          </div>
+          <span class="info-date"><i class="bi bi-calendar2-week"></i>${esc(formatDate(item.tanggal))}</span>
+          <h3>${esc(item.judul || "Pengumuman RW")}</h3>
+          <p class="summary-text">${sanitizeHtml(bodyText || "Informasi detail akan diperbarui oleh pengurus.")}</p>
+        </article>`;
+    };
+
+    renderMainArticle(sorted[0], 0);
+
+    const handleSidebarClick = (e) => {
+      const item = e.target.closest(".news-sidebar-item");
+      if (!item) return;
+      const idx = parseInt(item.dataset.index, 10);
+      if (item.classList.contains("active")) return;
+      sidebar.querySelectorAll(".news-sidebar-item").forEach(el => el.classList.remove("active"));
+      item.classList.add("active");
+      renderMainArticle(sorted[idx], idx);
+    };
+
+    sidebar.removeEventListener("click", sidebar._announceClick);
+    sidebar._announceClick = handleSidebarClick;
+    sidebar.addEventListener("click", handleSidebarClick);
   };
 
   const renderNews = (items = []) => {
@@ -262,19 +338,8 @@
     const getDate = (item) => {
       const raw = item.tanggal || item.tgl || item.date || item.tanggal_terbit || "";
       if (!raw) return 0;
-      const d = new Date(raw);
-      if (!Number.isNaN(d.getTime())) return d.getTime();
-      const parts = String(raw).split(/[/\-.]/);
-      if (parts.length === 3) {
-        const [a, b, c] = parts.map(Number);
-        if (!isNaN(a) && !isNaN(b) && !isNaN(c)) {
-          const y = c > 31 ? c : a > 31 ? c : a;
-          const m = c > 31 ? b : a > 31 ? b : c > 12 ? b : a;
-          const day = c > 31 ? a : a > 31 ? b : c;
-          return new Date(y, m - 1, day).getTime() || 0;
-        }
-      }
-      return 0;
+      const d = parseDate(raw);
+      return Number.isNaN(d.getTime()) ? 0 : d.getTime();
     };
 
     const sorted = [...active].sort((a, b) => getDate(b) - getDate(a));
@@ -355,6 +420,8 @@
 
     const groups = [
       { key: "rw", title: "Pengurus RW", icon: "bi-people-fill" },
+      { key: "posyandu", title: "Posyandu", icon: "bi-hospital" },
+      { key: "pkk", title: "PKK", icon: "bi-people" },
       { key: "bank-sampah", title: "Bank Sampah", icon: "bi-recycle" },
       { key: "pokmas", title: "Pokmas", icon: "bi-diagram-3" }
     ];
@@ -384,16 +451,269 @@
     }).join("");
   };
 
-  const updateStats = (data) => {
-    const orgCount = Object.values(data.organization || {}).reduce((total, group) => total + (Array.isArray(group) ? group.filter(isActive).length : 0), 0);
-    const stats = {
-      statAgenda: (data.news || fallback.news).filter(isActive).length + (data.announcements || fallback.announcements).filter(isActive).length,
-      statRT: Math.max(10, orgCount || 10)
-    };
-    Object.entries(stats).forEach(([id, value]) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = value;
+  const renderGallery = (items = []) => {
+    const target = document.getElementById("galleryContainer");
+    if (!target) return;
+
+    const active = items.length ? items : fallback.gallery;
+    galleryData = active;
+    if (!active.length) {
+      target.innerHTML = emptyMarkup("Belum ada foto kegiatan.");
+      return;
+    }
+
+    target.innerHTML = active.map((album, albumIdx) => {
+      const photos = album.photos;
+      const total = photos.length;
+      const take = total >= 4 ? 4 : total;
+      const cells = photos.slice(0, take);
+      let gridClass = "";
+      if (total === 1) gridClass = "album-card-grid--1";
+      else if (total === 2) gridClass = "album-card-grid--2";
+      else if (total === 3) gridClass = "album-card-grid--3";
+      else gridClass = "album-card-grid--4";
+
+      return `
+        <article class="album-card" data-album-index="${albumIdx}">
+          <div class="album-card-cover">
+            <div class="album-card-grid ${gridClass}">
+              ${cells.map((photo, i) => `
+                <div class="album-card-grid-cell${i === 0 && total === 3 ? " album-card-grid-cell--wide" : ""}">
+                  <img src="${esc(imageUrl(photo))}" alt="" loading="lazy">
+                </div>
+              `).join("")}
+            </div>
+            <div class="album-card-count-overlay"><span>${total} foto</span></div>
+          </div>
+          <div class="album-card-body">
+            <h3>${esc(album.nama || "Album")}</h3>
+            ${album.deskripsi ? `<p>${esc(album.deskripsi)}</p>` : ""}
+          </div>
+        </article>`;
+    }).join("");
+  };
+
+  const openLightbox = (source, albumIdx, photoIdx) => {
+    const overlay = document.getElementById("lightboxOverlay");
+    const img = overlay.querySelector(".lightbox-image");
+    lightboxSource = source;
+    const album = lightboxSource[albumIdx];
+    if (!album || !album.photos[photoIdx]) return;
+
+    currentAlbum = albumIdx;
+    currentPhoto = photoIdx;
+
+    const photo = album.photos[photoIdx];
+    img.src = imageUrl(photo, "w2000");
+    img.alt = photo.name || "Foto kegiatan";
+
+    overlay.querySelector(".lightbox-counter").textContent = `${photoIdx + 1}/${album.photos.length}`;
+    overlay.querySelector(".lightbox-name").textContent = album.nama || "";
+
+    updateNavButtons();
+    document.body.style.overflow = "hidden";
+    requestAnimationFrame(() => {
+      overlay.classList.add("is-open");
     });
+  };
+
+  const closeLightbox = () => {
+    const overlay = document.getElementById("lightboxOverlay");
+    overlay.classList.remove("is-open");
+    document.body.style.overflow = "";
+  };
+
+  const navigateLightbox = (dir) => {
+    const album = lightboxSource[currentAlbum];
+    if (!album) return;
+    const next = currentPhoto + dir;
+    if (next < 0 || next >= album.photos.length) return;
+    openLightbox(lightboxSource, currentAlbum, next);
+  };
+
+  const updateNavButtons = () => {
+    const album = lightboxSource[currentAlbum];
+    if (!album) return;
+    const prev = document.querySelector(".lightbox-prev");
+    const next = document.querySelector(".lightbox-next");
+    prev.classList.toggle("is-hidden", currentPhoto === 0);
+    next.classList.toggle("is-hidden", currentPhoto === album.photos.length - 1);
+  };
+
+  const renderStatistics = (items = []) => {
+    const container = document.getElementById("statsContainer");
+    if (!container) return;
+    if (!items.length) { container.innerHTML = ""; return; }
+
+    const iconMap = {
+      warga: "bi-people-fill",
+      "kepala keluarga": "bi-house-door-fill",
+      kk: "bi-house-door-fill",
+      kegiatan: "bi-calendar-event-fill",
+      agenda: "bi-calendar-event-fill",
+      rt: "bi-shield-check",
+      "rukun tetangga": "bi-shield-check",
+      laki: "bi-gender-male",
+      perempuan: "bi-gender-female",
+      balita: "bi-heart-fill",
+      lansia: "bi-person-wheelchair"
+    };
+
+    const getIcon = (name) => {
+      const lower = (name || "").toLowerCase();
+      for (const [key, icon] of Object.entries(iconMap)) {
+        if (lower.includes(key)) return icon;
+      }
+      return "bi-bar-chart-fill";
+    };
+
+    container.innerHTML = items.map((item) => `
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <i class="bi ${getIcon(item.nama)}"></i>
+          <strong data-target="${Number(item.nilai || 0)}">0</strong>
+          <span>${esc(item.nama)}</span>
+        </div>
+      </div>`).join("");
+
+    animateCounters();
+  };
+
+  const animateCounters = () => {
+    const container = document.getElementById("statsContainer");
+    if (!container) return;
+    const targets = container.querySelectorAll("[data-target]");
+    if (!targets.length) return;
+
+    const duration = 2000;
+
+    const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+
+    const startAnimation = (el) => {
+      const target = parseInt(el.dataset.target, 10) || 0;
+      if (target === 0) return;
+      const startTime = performance.now();
+
+      const tick = (now) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const value = Math.round(easeOut(progress) * target);
+        el.textContent = value.toLocaleString("id-ID");
+        if (progress < 1) requestAnimationFrame(tick);
+      };
+
+      requestAnimationFrame(tick);
+    };
+
+    if (!("IntersectionObserver" in window)) {
+      targets.forEach(startAnimation);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            startAnimation(entry.target);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    targets.forEach((el) => observer.observe(el));
+  };
+
+  const updateStats = (data) => {
+    renderStatistics(data.statistik || fallback.statistik);
+  };
+
+  const renderKasReport = (bulan, tahun) => {
+    const loading = document.getElementById("kasLoadingState");
+    const reportBox = document.getElementById("kasReportBox");
+    const emptyState = document.getElementById("kasEmptyState");
+    const btn = document.getElementById("kasBtnCari");
+    const bulanSel = document.getElementById("kasFilterBulan");
+    const tahunSel = document.getElementById("kasFilterTahun");
+
+    if (!bulanSel || !tahunSel) return;
+
+    if (!bulanSel.options.length) {
+      const namaBulan = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+      const now = new Date();
+      namaBulan.forEach((nama, i) => {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.text = nama;
+        if (i === now.getMonth()) opt.selected = true;
+        bulanSel.appendChild(opt);
+      });
+      for (let y = now.getFullYear() - 2; y <= now.getFullYear() + 1; y++) {
+        const opt = document.createElement("option");
+        opt.value = y;
+        opt.text = y;
+        if (y === now.getFullYear()) opt.selected = true;
+        tahunSel.appendChild(opt);
+      }
+    }
+
+    const b = bulan !== undefined ? bulan : bulanSel.value;
+    const t = tahun !== undefined ? tahun : tahunSel.value;
+
+    if (reportBox) reportBox.style.display = "none";
+    if (emptyState) emptyState.style.display = "none";
+    if (loading) loading.style.display = "flex";
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Memuat'; }
+
+    if (!cfg.APPS_SCRIPT_URL) {
+      if (loading) loading.style.display = "none";
+      if (emptyState) emptyState.style.display = "flex";
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-search"></i> Cari'; }
+      return;
+    }
+
+    fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=publicKasReport&bulan=${encodeURIComponent(b)}&tahun=${encodeURIComponent(t)}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Gagal memuat laporan.");
+        return res.json();
+      })
+      .then((data) => {
+        if (loading) loading.style.display = "none";
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-search"></i> Cari'; }
+        if (!data.ok || (!data.rincianMasuk.length && !data.rincianKeluar.length && data.saldoAwal === 0)) {
+          if (emptyState) emptyState.style.display = "flex";
+          return;
+        }
+        if (reportBox) reportBox.style.display = "block";
+        const fmt = (n) => "Rp " + Number(n).toLocaleString("id-ID");
+        const sa = document.getElementById("kasSaldoAwal");
+        const tm = document.getElementById("kasTotalMasuk");
+        const tk = document.getElementById("kasTotalKeluar");
+        const sk = document.getElementById("kasSaldoAkhir");
+        if (sa) sa.textContent = fmt(data.saldoAwal);
+        if (tm) tm.textContent = fmt(data.totalMasuk);
+        if (tk) tk.textContent = fmt(data.totalKeluar);
+        if (sk) sk.textContent = fmt(data.saldoAkhir);
+
+        const bm = document.getElementById("kasBodyMasuk");
+        const bk = document.getElementById("kasBodyKeluar");
+        if (bm) {
+          bm.innerHTML = data.rincianMasuk.length
+            ? data.rincianMasuk.map((r) => `<tr><td>${esc(r.uraian)}</td><td class="text-end fw-bold text-success">${fmt(r.nominal)}</td></tr>`).join("")
+            : '<tr class="kas-empty-row"><td colspan="2">Tidak ada pemasukan</td></tr>';
+        }
+        if (bk) {
+          bk.innerHTML = data.rincianKeluar.length
+            ? data.rincianKeluar.map((r) => `<tr><td>${esc(r.uraian)}</td><td class="text-end fw-bold text-danger">${fmt(r.nominal)}</td></tr>`).join("")
+            : '<tr class="kas-empty-row"><td colspan="2">Tidak ada pengeluaran</td></tr>';
+        }
+      })
+      .catch(() => {
+        if (loading) loading.style.display = "none";
+        if (emptyState) emptyState.style.display = "flex";
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-search"></i> Cari'; }
+      });
   };
 
   const renderContent = (data = fallback) => {
@@ -402,6 +722,7 @@
     renderNews(data.news || fallback.news);
     renderFacilities(data.facilities || fallback.facilities);
     renderOrganization(data.organization || fallback.organization);
+    renderGallery(data.gallery || fallback.gallery);
     updateStats(data);
   };
 
@@ -428,17 +749,6 @@
       }
     });
 
-    if (showAllButton) {
-      showAllButton.addEventListener("click", () => {
-        const expanded = showAllButton.dataset.expanded === "true";
-        document.querySelectorAll(".extra-announcement").forEach((item) => item.classList.toggle("d-none", expanded));
-        showAllButton.dataset.expanded = String(!expanded);
-        showAllButton.innerHTML = expanded
-          ? '<i class="bi bi-grid-3x3-gap-fill"></i> Lihat Semua'
-          : '<i class="bi bi-chevron-up"></i> Tampilkan Ringkas';
-      });
-    }
-
     document.addEventListener("click", (event) => {
       const heading = event.target.closest("[data-toggle=\"org-accordion\"]");
       if (heading) {
@@ -457,6 +767,69 @@
     if (backToTop) {
       backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
     }
+
+    const kasBtn = document.getElementById("kasBtnCari");
+    if (kasBtn) {
+      kasBtn.addEventListener("click", () => renderKasReport());
+    }
+
+    const galleryContainer = document.getElementById("galleryContainer");
+    if (galleryContainer) {
+      galleryContainer.addEventListener("click", (e) => {
+        const card = e.target.closest(".album-card");
+        if (card) {
+          openLightbox(galleryData, parseInt(card.dataset.albumIndex, 10), 0);
+        }
+      });
+    }
+
+    const heroSlides = document.getElementById("heroSlides");
+    if (heroSlides) {
+      heroSlides.addEventListener("click", (e) => {
+        const img = e.target.closest(".hero-slide img");
+        if (!img) return;
+        const heroAlbum = [{
+          nama: "Slide Beranda",
+          photos: heroData.map((item) => ({
+            imageUrl: imageUrl(item, "w2000") || "",
+            name: item.judul || "Slide Beranda"
+          }))
+        }];
+        const slideIdx = [...heroSlides.querySelectorAll(".carousel-item")].findIndex(
+          (ci) => ci.contains(img)
+        );
+        openLightbox(heroAlbum, 0, slideIdx >= 0 ? slideIdx : 0);
+      });
+    }
+
+    const overlay = document.getElementById("lightboxOverlay");
+    if (overlay) {
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) closeLightbox();
+      });
+
+      overlay.querySelector(".lightbox-close")?.addEventListener("click", closeLightbox);
+      overlay.querySelector(".lightbox-prev")?.addEventListener("click", () => navigateLightbox(-1));
+      overlay.querySelector(".lightbox-next")?.addEventListener("click", () => navigateLightbox(1));
+
+      const wrap = overlay.querySelector(".lightbox-image-wrap");
+      if (wrap) {
+        let sx = 0;
+        wrap.addEventListener("touchstart", (e) => { sx = e.changedTouches[0].screenX; }, { passive: true });
+        wrap.addEventListener("touchend", (e) => {
+          const dx = e.changedTouches[0].screenX - sx;
+          if (Math.abs(dx) > 50) navigateLightbox(dx > 0 ? -1 : 1);
+        }, { passive: true });
+      }
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (overlay && overlay.classList.contains("is-open")) {
+        if (e.key === "Escape") closeLightbox();
+        if (e.key === "ArrowLeft") navigateLightbox(-1);
+        if (e.key === "ArrowRight") navigateLightbox(1);
+      }
+    });
   };
 
   const fetchWithTimeout = (url, ms = 10000) => {
@@ -502,7 +875,7 @@
   const initScrollReveal = () => {
     if (!("IntersectionObserver" in window)) return;
     const els = document.querySelectorAll(
-      ".section-header, .info-card, .news-sidebar, .news-main-article, .facility-card, .org-group, .gallery-grid, .contact-list, .map-box"
+      ".section-header, .info-card, .news-sidebar, .news-main-article, .facility-card, .org-group, .album-card, .contact-list, .map-box"
     );
     els.forEach((el) => el.classList.add("reveal"));
     const observer = new IntersectionObserver(
@@ -522,8 +895,12 @@
   window.addEventListener("load", () => {
     const preloader = document.getElementById("preloader");
     if (!preloader) return;
-    preloader.classList.add("hide");
-    setTimeout(() => preloader.remove(), 450);
+    const elapsed = Date.now() - pageLoadStart;
+    const remaining = Math.max(0, 3000 - elapsed);
+    setTimeout(() => {
+      preloader.classList.add("hide");
+      setTimeout(() => preloader.remove(), 450);
+    }, remaining);
   });
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -535,5 +912,6 @@
     initDarkMode();
     initScrollReveal();
     loadPublicContent();
+    renderKasReport();
   });
 })();

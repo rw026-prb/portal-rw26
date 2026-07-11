@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Portal digital RW 026 Pengasinan Rawalumbu untuk informasi, pengumuman, berita, layanan, dan kontak warga.">
-  <title>Portal Digital RW 026 Pengasinan</title>
+  <title>Portal RW026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
   <div id="preloader" aria-live="polite">
       <div class="loader-wrapper">
         <img src="assets/logo/logo-rw.png" alt="RW 026" class="loader-logo" width="86" height="86">
-        <h4>Portal Digital RW 026</h4>
+        <h4>Portal Digital RW026 Pengasinan</h4>
       <p>Memuat informasi warga...</p>
     </div>
   </div>
@@ -43,10 +43,11 @@
         <ul class="navbar-nav ms-auto align-items-lg-center">
           <li class="nav-item"><a class="nav-link active" href="#beranda">Beranda</a></li>
           <li class="nav-item"><a class="nav-link" href="#pengumuman">Pengumuman</a></li>
-          <li class="nav-item"><a class="nav-link" href="#layanan">Layanan</a></li>
           <li class="nav-item"><a class="nav-link" href="#berita">Berita</a></li>
+          <li class="nav-item"><a class="nav-link" href="#galeri">Galeri</a></li>
           <li class="nav-item"><a class="nav-link" href="#fasilitas">Fasilitas</a></li>
           <li class="nav-item"><a class="nav-link" href="#pengurus">Pengurus</a></li>
+          <li class="nav-item"><a class="nav-link" href="#keuangan">Keuangan</a></li>
           <li class="nav-item ms-lg-2"><a class="btn btn-primary-soft" href="#kontak"><i class="bi bi-telephone-fill"></i> Kontak</a></li>
         </ul>
       </div>
@@ -84,10 +85,6 @@
                 <span class="visually-hidden">Selanjutnya</span>
               </button>
             </div>
-            <div class="hero-note">
-              <i class="bi bi-info-circle-fill"></i>
-              <span>Konten utama tersinkron dari data spreadsheet pengurus.</span>
-            </div>
           </div>
         </div>
       </div>
@@ -106,16 +103,11 @@
       </div>
     </section> -->
 
-    <!-- <section class="statistics" aria-label="Statistik lingkungan">
+    <section class="statistics" aria-label="Statistik lingkungan">
       <div class="container">
-        <div class="row g-3 g-lg-4">
-          <div class="col-6 col-lg-3"><div class="stat-card"><i class="bi bi-people-fill"></i><strong id="statWarga">1950</strong><span>Jumlah Warga</span></div></div>
-          <div class="col-6 col-lg-3"><div class="stat-card"><i class="bi bi-house-door-fill"></i><strong id="statKK">620</strong><span>Kepala Keluarga</span></div></div>
-          <div class="col-6 col-lg-3"><div class="stat-card"><i class="bi bi-calendar-event-fill"></i><strong id="statAgenda">18</strong><span>Kegiatan</span></div></div>
-          <div class="col-6 col-lg-3"><div class="stat-card"><i class="bi bi-shield-check"></i><strong id="statRT">10</strong><span>RT Aktif</span></div></div>
-        </div>
+        <div class="row g-3 g-lg-4" id="statsContainer"></div>
       </div>
-    </section> -->
+    </section>
 
     <section id="pengumuman" class="section-pad bg-white">
       <div class="container">
@@ -125,9 +117,17 @@
             <h2>Pengumuman Warga</h2>
             <p>Informasi resmi dari pengurus RW ditampilkan singkat, rapi, dan mudah dipahami.</p>
           </div>
-          <button class="btn btn-outline-success" type="button" id="showAllAnnouncements"><i class="bi bi-grid-3x3-gap-fill"></i> Lihat Semua</button>
         </div>
-        <div class="row g-4" id="announcementList"></div>
+        <div class="news-layout">
+          <div class="news-sidebar">
+            <div class="news-sidebar-header">
+              <i class="bi bi-megaphone"></i>
+              <span>PENGUMUMAN</span>
+            </div>
+            <div class="news-sidebar-list" id="announcementSidebar"></div>
+          </div>
+          <div class="news-main" id="announcementMainContent"></div>
+        </div>
       </div>
     </section>
 
@@ -193,11 +193,7 @@
             <p>Cuplikan kegiatan bersama warga RW 026.</p>
           </div>
         </div>
-        <div class="gallery-grid">
-          <img src="assets/images/slide-kerja-bakti.svg" alt="Ilustrasi kerja bakti warga">
-          <img src="assets/images/slide-posyandu.svg" alt="Ilustrasi posyandu warga">
-          <img src="assets/images/slide-pelayanan.svg" alt="Ilustrasi pelayanan administrasi">
-        </div>
+        <div id="galleryContainer"></div>
       </div>
     </section>
 
@@ -214,6 +210,93 @@
       </div>
     </section>
 
+    <section id="keuangan" class="section-pad">
+      <div class="container">
+        <div class="section-header centered">
+          <div>
+            <span class="section-badge">Keuangan</span>
+            <h2>Laporan Keuangan RW</h2>
+            <p>Laporan keuangan resmi Rukun Warga 026.</p>
+          </div>
+        </div>
+        <div class="kas-filter">
+          <div class="kas-filter-inner">
+            <div class="kas-filter-group">
+              <label for="kasFilterBulan"><i class="bi bi-calendar3"></i> Bulan</label>
+              <select id="kasFilterBulan" class="kas-select"></select>
+            </div>
+            <div class="kas-filter-group">
+              <label for="kasFilterTahun"><i class="bi bi-calendar-event"></i> Tahun</label>
+              <select id="kasFilterTahun" class="kas-select"></select>
+            </div>
+            <button type="button" id="kasBtnCari" class="kas-btn-search">
+              <i class="bi bi-search"></i> Cari
+            </button>
+          </div>
+        </div>
+        <div id="kasLoadingState" class="kas-loading" style="display:none;">
+          <div class="spinner-border text-primary" role="status"></div>
+          <span>Memuat data keuangan...</span>
+        </div>
+        <div id="kasReportBox" style="display:none;">
+          <div class="kas-summary-grid">
+            <div class="kas-stat-card kas-saldo-awal">
+              <div class="kas-stat-icon"><i class="bi bi-clock-history"></i></div>
+              <small>Saldo Awal</small>
+              <span id="kasSaldoAwal">Rp 0</span>
+            </div>
+            <div class="kas-stat-card kas-total-masuk">
+              <div class="kas-stat-icon"><i class="bi bi-arrow-down-circle"></i></div>
+              <small>Total Masuk</small>
+              <span id="kasTotalMasuk">Rp 0</span>
+            </div>
+            <div class="kas-stat-card kas-total-keluar">
+              <div class="kas-stat-icon"><i class="bi bi-arrow-up-circle"></i></div>
+              <small>Total Keluar</small>
+              <span id="kasTotalKeluar">Rp 0</span>
+            </div>
+            <div class="kas-stat-card kas-saldo-akhir">
+              <div class="kas-stat-icon"><i class="bi bi-wallet2"></i></div>
+              <small>Saldo Akhir</small>
+              <span id="kasSaldoAkhir">Rp 0</span>
+            </div>
+          </div>
+          <div class="kas-detail-grid">
+            <div class="kas-detail-card">
+              <h6 class="kas-detail-title kas-detail-masuk">
+                <i class="bi bi-arrow-down-circle"></i> Rincian Pemasukan
+              </h6>
+              <div class="table-responsive">
+                <table class="kas-table">
+                  <thead>
+                    <tr><th>Uraian</th><th class="text-end">Jumlah</th></tr>
+                  </thead>
+                  <tbody id="kasBodyMasuk"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="kas-detail-card">
+              <h6 class="kas-detail-title kas-detail-keluar">
+                <i class="bi bi-arrow-up-circle"></i> Rincian Pengeluaran
+              </h6>
+              <div class="table-responsive">
+                <table class="kas-table">
+                  <thead>
+                    <tr><th>Uraian</th><th class="text-end">Jumlah</th></tr>
+                  </thead>
+                  <tbody id="kasBodyKeluar"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="kasEmptyState" class="kas-empty">
+          <i class="bi bi-inbox"></i>
+          <p>Belum ada data keuangan untuk periode ini.</p>
+        </div>
+      </div>
+    </section>
+
     <section id="kontak" class="section-pad contact-section">
       <div class="container">
         <div class="row g-5 align-items-center">
@@ -223,7 +306,7 @@
             <p>Pengasinan, Rawalumbu, Kota Bekasi. Silakan hubungi pengurus untuk informasi layanan warga dan kegiatan lingkungan.</p>
             <div class="contact-list">
               <a href="https://www.google.com/maps?q=Pengasinan+Rawalumbu+Bekasi" target="_blank" rel="noopener"><i class="bi bi-geo-alt-fill"></i><span>Pengasinan, Rawalumbu</span></a>
-              <a href="mailto:rw026@email.com"><i class="bi bi-envelope-fill"></i><span>rw026@email.com</span></a>
+              <a href="mailto:rw026.pengasinan@gmail.com"><i class="bi bi-envelope-fill"></i><span>rw026.pengasinan@gmail.com</span></a>
               <a href="tel:081200000000"><i class="bi bi-telephone-fill"></i><span>0812 xxxx xxxx</span></a>
               <div><i class="bi bi-clock-fill"></i><span>08.00 - 21.00 WIB</span></div>
             </div>
@@ -250,19 +333,20 @@
           <a href="#beranda">Beranda</a>
           <a href="#pengumuman">Pengumuman</a>
           <a href="#berita">Berita</a>
+          <a href="#galeri">Galeri</a>
+          <a href="#fasilitas">Fasilitas</a>
           <a href="#pengurus">Pengurus</a>
+          <a href="#keuangan">Keuangan</a>
         </div>
         <div class="col-6 col-lg-2">
           <h4>Layanan</h4>
-          <span>Surat Pengantar</span>
-          <span>Agenda RW</span>
-          <span>Pengaduan</span>
-          <span>Iuran Warga</span>
+          <a href="#kontak">Sekretariat RW</a>
+          <a href="#keuangan">Laporan Keuangan</a>
         </div>
         <div class="col-lg-3">
           <h4>Kontak</h4>
           <p><i class="bi bi-geo-alt-fill"></i> Rawalumbu, Bekasi</p>
-          <p><i class="bi bi-envelope-fill"></i> rw026@email.com</p>
+          <p><i class="bi bi-envelope-fill"></i> rw026.pengasinan@gmail.com</p>
           <div class="social-icons">
             <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
             <a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
@@ -277,6 +361,19 @@
 
   <a href="#kontak" id="floatingWA" class="floating-wa" aria-label="Hubungi RW 026"><i class="bi bi-whatsapp"></i></a>
   <button id="backToTop" class="back-to-top" type="button" aria-label="Kembali ke atas"><i class="bi bi-arrow-up"></i></button>
+
+  <div id="lightboxOverlay" class="lightbox-overlay" role="dialog" aria-modal="true" aria-label="Galeri foto" aria-hidden="true">
+    <button class="lightbox-close" type="button" aria-label="Tutup">&times;</button>
+    <button class="lightbox-nav lightbox-prev" type="button" aria-label="Sebelumnya"><i class="bi bi-chevron-left"></i></button>
+    <button class="lightbox-nav lightbox-next" type="button" aria-label="Berikutnya"><i class="bi bi-chevron-right"></i></button>
+    <div class="lightbox-image-wrap">
+      <img class="lightbox-image" src="" alt="">
+    </div>
+    <div class="lightbox-caption">
+      <span class="lightbox-counter"></span>
+      <span class="lightbox-name"></span>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="config.js"></script>
