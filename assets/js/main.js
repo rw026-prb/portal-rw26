@@ -708,13 +708,13 @@
         const bk = document.getElementById("kasBodyKeluar");
         if (bm) {
           bm.innerHTML = data.rincianMasuk.length
-            ? data.rincianMasuk.map((r) => `<tr><td>${esc(r.uraian)}</td><td class="text-end fw-bold text-success">${fmt(r.nominal)}</td></tr>`).join("")
-            : '<tr class="kas-empty-row"><td colspan="2">Tidak ada pemasukan</td></tr>';
+            ? data.rincianMasuk.map((r) => `<tr><td>${esc(r.tanggal)}</td><td>${esc(r.uraian)}</td><td class="text-end fw-bold text-success">${fmt(r.nominal)}</td></tr>`).join("")
+            : '<tr class="kas-empty-row"><td colspan="3">Tidak ada pemasukan</td></tr>';
         }
         if (bk) {
           bk.innerHTML = data.rincianKeluar.length
-            ? data.rincianKeluar.map((r) => `<tr><td>${esc(r.uraian)}</td><td class="text-end fw-bold text-danger">${fmt(r.nominal)}</td></tr>`).join("")
-            : '<tr class="kas-empty-row"><td colspan="2">Tidak ada pengeluaran</td></tr>';
+            ? data.rincianKeluar.map((r) => `<tr><td>${esc(r.tanggal)}</td><td>${esc(r.uraian)}</td><td class="text-end fw-bold text-danger">${fmt(r.nominal)}</td></tr>`).join("")
+            : '<tr class="kas-empty-row"><td colspan="3">Tidak ada pengeluaran</td></tr>';
         }
       })
       .catch(() => {

@@ -1522,6 +1522,13 @@ p {
   padding: 20px;
 }
 
+.kas-table td:first-child,
+.kas-table th:first-child {
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: .78rem;
+}
+
 .kas-updated-at {
   display: flex;
   align-items: center;
