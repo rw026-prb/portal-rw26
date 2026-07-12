@@ -2085,7 +2085,10 @@ p {
   color: var(--ink);
 }
 
-[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-white {
+  background: var(--surface) !important;
+  border-color: var(--line);
+}
 [data-theme="dark"] .info-card,
 [data-theme="dark"] .news-card,
 [data-theme="dark"] .news-sidebar-item,
