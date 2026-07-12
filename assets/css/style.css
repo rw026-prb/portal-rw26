@@ -1828,6 +1828,12 @@ p {
     padding: 68px 0;
   }
 
+  .statistics .section-header,
+  .statistics .section-header.centered {
+    text-align: center;
+    justify-content: center;
+  }
+
   .org-group {
     padding: 18px;
   }
