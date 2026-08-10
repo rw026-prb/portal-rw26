@@ -1,6 +1,5 @@
 (() => {
   "use strict";
-  const pageLoadStart = Date.now();
 
   const cfg = window.RW26_CONFIG || {};
   const navbar = document.getElementById("mainNav");
@@ -15,111 +14,11 @@
   let currentAlbum = 0;
   let currentPhoto = 0;
 
-  const fallback = {
-    himbauan: [
-      {
-        judul: "Kerja bakti lingkungan",
-        kategori: "Kegiatan",
-        ringkasan: "Mari menjaga kebersihan jalan, selokan, dan fasilitas umum bersama warga.",
-        imageUrl: "assets/images/slide-kerja-bakti.svg"
-      },
-      {
-        judul: "Posyandu RW 026",
-        kategori: "Kesehatan",
-        ringkasan: "Layanan kesehatan balita, lansia, dan konsultasi gizi untuk keluarga.",
-        imageUrl: "assets/images/slide-posyandu.svg"
-      },
-      {
-        judul: "Pelayanan administrasi",
-        kategori: "Administrasi",
-        ringkasan: "Informasi pengajuan surat dan layanan administrasi warga RW 026.",
-        imageUrl: "assets/images/slide-pelayanan.svg"
-      }
-    ],
-    announcements: [
-      {
-        judul: "Jadwal kerja bakti lingkungan",
-        kategori: "Kegiatan",
-        tanggal: "2026-07-07",
-        ringkasan: "Kerja bakti dilaksanakan mulai pukul 07.00 WIB. Warga dimohon membawa alat kebersihan masing-masing.",
-        status: "Aktif"
-      },
-      {
-        judul: "Pendataan warga baru",
-        kategori: "Administrasi",
-        tanggal: "2026-07-10",
-        ringkasan: "Warga baru dapat menghubungi ketua RT setempat untuk melengkapi data keluarga.",
-        status: "Aktif"
-      },
-      {
-        judul: "Kegiatan posyandu bulanan",
-        kategori: "Kesehatan",
-        tanggal: "2026-07-14",
-        ringkasan: "Posyandu akan melayani penimbangan balita, pemeriksaan lansia, dan konsultasi kesehatan dasar.",
-        status: "Aktif"
-      }
-    ],
-    news: [
-      {
-        judul: "Warga kompak menjaga kebersihan lingkungan",
-        kategori: "Kegiatan",
-        tanggal: "2026-07-01",
-        ringkasan: "Kegiatan kebersihan rutin berjalan lancar dengan dukungan warga dari beberapa RT.",
-        imageUrl: "assets/images/slide-kerja-bakti.svg",
-        status: "Aktif"
-      },
-      {
-        judul: "Pelayanan administrasi semakin mudah",
-        kategori: "Administrasi",
-        tanggal: "2026-06-28",
-        ringkasan: "Pengurus RW menyiapkan kanal informasi agar warga lebih mudah memahami alur layanan.",
-        imageUrl: "assets/images/slide-pelayanan.svg",
-        status: "Aktif"
-      }
-    ],
-    facilities: [
-      { nama: "Balai Warga", kategori: "Fasilitas", deskripsi: "Ruang pertemuan dan kegiatan warga." },
-      { nama: "Pos Keamanan", kategori: "Keamanan", deskripsi: "Tempat koordinasi keamanan lingkungan." },
-      { nama: "Area Olahraga", kategori: "Olahraga", deskripsi: "Sarana aktivitas sehat bersama warga." },
-      { nama: "Bank Sampah", kategori: "Lingkungan", deskripsi: "Dukungan pengelolaan sampah bernilai guna." }
-    ],
-    organization: {
-      rw: [
-        { nama: "Ketua RW 026", jabatan: "Ketua RW" },
-        { nama: "Sekretaris RW", jabatan: "Sekretaris" },
-        { nama: "Bendahara RW", jabatan: "Bendahara" }
-      ],
-      posyandu: [
-        { nama: "Koordinator Posyandu", jabatan: "Koordinator" }
-      ],
-      pkk: [
-        { nama: "Ketua PKK", jabatan: "Ketua" }
-      ],
-      "bank-sampah": [
-        { nama: "Koordinator Bank Sampah", jabatan: "Koordinator" }
-      ],
-      pokmas: [
-        { nama: "Koordinator Pokmas", jabatan: "Koordinator" }
-      ]
-    },
-    gallery: [
-      {
-        nama: "Kegiatan RW 026",
-        deskripsi: "Dokumentasi kegiatan warga RW 026",
-        photos: [
-          { imageUrl: "assets/images/slide-kerja-bakti.svg", name: "Kerja Bakti" },
-          { imageUrl: "assets/images/slide-posyandu.svg", name: "Posyandu" },
-          { imageUrl: "assets/images/slide-pelayanan.svg", name: "Pelayanan" }
-        ]
-      }
-    ],
-    statistik: [
-      { nama: "Jumlah Warga", nilai: 1950 },
-      { nama: "Kepala Keluarga", nilai: 620 },
-      { nama: "Kegiatan", nilai: 0 },
-      { nama: "RT Aktif", nilai: 10 }
-    ]
-  };
+  const placeholderImages = [
+    "assets/images/slide-kerja-bakti.svg",
+    "assets/images/slide-posyandu.svg",
+    "assets/images/slide-pelayanan.svg"
+  ];
 
   const icons = {
     Administrasi: "bi-receipt",
@@ -243,18 +142,39 @@
     if (gallery) gallery.innerHTML = loadingMarkup("Memuat galeri...");
   };
 
-  const renderHero = (items = fallback.himbauan) => {
+  const renderHero = (items = []) => {
     const slides = document.getElementById("heroSlides");
     const indicators = document.getElementById("heroIndicators");
-    if (!slides || !indicators) return;
+    const carousel = document.getElementById("infoCarousel");
+    if (!slides || !indicators || !carousel) return;
 
-    const activeItems = (items.length ? items : fallback.himbauan).filter(Boolean);
+    const panel = carousel.closest(".hero-panel");
+    const activeItems = (items || []).filter(Boolean);
     heroData = activeItems;
+
+    if (panel) {
+      panel.querySelector(".hero-empty")?.remove();
+    }
+
+    if (!activeItems.length) {
+      slides.innerHTML = "";
+      indicators.innerHTML = "";
+      carousel.style.display = "none";
+      if (panel) {
+        panel.insertAdjacentHTML("beforeend", `
+          <div class="hero-empty">
+            <i class="bi bi-megaphone"></i>
+            <p>Belum ada pengumuman dari pengurus RW.</p>
+          </div>`);
+      }
+      return;
+    }
+
+    carousel.style.display = "";
     slides.innerHTML = activeItems.map((item, idx) => `
       <div class="carousel-item ${idx === 0 ? "active" : ""}">
         <article class="hero-slide">
-          <img src="${esc(imageUrl(item, "w2000") || fallback.himbauan[idx % fallback.himbauan.length].imageUrl)}" alt="${esc(item.judul || "Informasi RW 026")}">
-
+          <img src="${esc(imageUrl(item, "w2000") || placeholderImages[idx % placeholderImages.length])}" alt="${esc(item.judul || "Informasi RW 026")}">
         </article>
       </div>`).join("");
 
@@ -267,7 +187,7 @@
     const mainContent = document.getElementById("announcementMainContent");
     if (!sidebar || !mainContent) return;
 
-    const active = (items.length ? items : fallback.announcements).filter(isActive);
+    const active = (items || []).filter(isActive);
     if (!active.length) {
       mainContent.innerHTML = emptyMarkup("Belum ada pengumuman aktif.");
       sidebar.innerHTML = "";
@@ -328,7 +248,7 @@
     const mainContent = document.getElementById("newsMainContent");
     if (!sidebar || !mainContent) return;
 
-    const active = (items.length ? items : fallback.news).filter(isActive);
+    const active = (items || []).filter(isActive);
     if (!active.length) {
       mainContent.innerHTML = emptyMarkup("Belum ada berita aktif.");
       sidebar.innerHTML = "";
@@ -355,7 +275,7 @@
       </div>`).join("");
 
     const renderMainArticle = (item, idx) => {
-      const img = imageUrl(item, "w1200") || fallback.himbauan[idx % fallback.himbauan.length].imageUrl;
+      const img = imageUrl(item, "w1200") || placeholderImages[idx % placeholderImages.length];
       const bodyText = getText(item, ["isi", "konten", "ringkasan", "deskripsi"]);
       mainContent.innerHTML = `
         <article class="news-main-article">
@@ -394,7 +314,7 @@
     const target = document.getElementById("facilityList");
     if (!target) return;
 
-    const list = items.length ? items : fallback.facilities;
+    const list = items || [];
     if (!list.length) {
       target.innerHTML = emptyMarkup("Data fasilitas belum tersedia.");
       return;
@@ -414,7 +334,7 @@
     }).join("");
   };
 
-  const renderOrganization = (org = fallback.organization) => {
+  const renderOrganization = (org = {}) => {
     const target = document.getElementById("orgList");
     if (!target) return;
 
@@ -455,7 +375,7 @@
     const target = document.getElementById("galleryContainer");
     if (!target) return;
 
-    const active = items.length ? items : fallback.gallery;
+    const active = items || [];
     galleryData = active;
     if (!active.length) {
       target.innerHTML = emptyMarkup("Belum ada foto kegiatan.");
@@ -463,7 +383,7 @@
     }
 
     target.innerHTML = active.map((album, albumIdx) => {
-      const photos = album.photos;
+      const photos = album.photos || [];
       const total = photos.length;
       const take = total >= 4 ? 4 : total;
       const cells = photos.slice(0, take);
@@ -541,9 +461,16 @@
   };
 
   const renderStatistics = (items = []) => {
+    const section = document.querySelector(".statistics");
     const container = document.getElementById("statsContainer");
     if (!container) return;
-    if (!items.length) { container.innerHTML = ""; return; }
+    const list = items || [];
+    if (!list.length) {
+      container.innerHTML = "";
+      if (section) section.style.display = "none";
+      return;
+    }
+    if (section) section.style.display = "";
 
     const iconMap = {
       warga: "bi-people-fill",
@@ -567,7 +494,7 @@
       return "bi-bar-chart-fill";
     };
 
-    container.innerHTML = items.map((item) => `
+    container.innerHTML = list.map((item) => `
       <div class="col-6 col-lg-3">
         <div class="stat-card">
           <i class="bi ${getIcon(item.nama)}"></i>
@@ -626,17 +553,12 @@
   };
 
   const updateStats = (data) => {
-    renderStatistics(data.statistik || fallback.statistik);
+    renderStatistics(data.statistik);
   };
 
-  const renderKasReport = (bulan, tahun) => {
-    const loading = document.getElementById("kasLoadingState");
-    const reportBox = document.getElementById("kasReportBox");
-    const emptyState = document.getElementById("kasEmptyState");
-    const btn = document.getElementById("kasBtnCari");
+  const renderKasReport = (bulan, tahun, force = false) => {
     const bulanSel = document.getElementById("kasFilterBulan");
     const tahunSel = document.getElementById("kasFilterTahun");
-
     if (!bulanSel || !tahunSel) return;
 
     if (!bulanSel.options.length) {
@@ -660,13 +582,74 @@
 
     const b = bulan !== undefined ? bulan : bulanSel.value;
     const t = tahun !== undefined ? tahun : tahunSel.value;
+    const cacheKey = `rw26.kas.${b}.${t}.${CACHE_VERSION}`;
+    if (force) cacheRemove(cacheKey);
 
-    if (reportBox) reportBox.style.display = "none";
-    if (emptyState) emptyState.style.display = "none";
+    const cached = cacheRead(cacheKey);
+    if (cached) {
+      renderKasData(cached.data);
+      if (cacheIsFresh(cached, CACHE_TTL_KAS)) return;
+      fetchKasReport(cacheKey, b, t, true);
+      return;
+    }
+
+    fetchKasReport(cacheKey, b, t, false);
+  };
+
+  const renderKasData = (data) => {
+    const reportBox = document.getElementById("kasReportBox");
+    const emptyState = document.getElementById("kasEmptyState");
     const updatedAtEl = document.getElementById("kasUpdatedAt");
-    if (updatedAtEl) updatedAtEl.style.display = "none";
-    if (loading) loading.style.display = "flex";
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Memuat'; }
+    if (emptyState) emptyState.style.display = "none";
+    if (reportBox) reportBox.style.display = "block";
+
+    const updatedTimeEl = document.getElementById("kasUpdatedTime");
+    if (updatedAtEl && updatedTimeEl) {
+      const d = data.updatedAt ? new Date(data.updatedAt) : new Date();
+      updatedTimeEl.textContent = d.toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+      updatedAtEl.style.display = "flex";
+    }
+
+    const fmt = (n) => "Rp " + Number(n).toLocaleString("id-ID");
+    const sa = document.getElementById("kasSaldoAwal");
+    const tm = document.getElementById("kasTotalMasuk");
+    const tk = document.getElementById("kasTotalKeluar");
+    const sk = document.getElementById("kasSaldoAkhir");
+    if (sa) sa.textContent = fmt(data.saldoAwal);
+    if (tm) tm.textContent = fmt(data.totalMasuk);
+    if (tk) tk.textContent = fmt(data.totalKeluar);
+    if (sk) sk.textContent = fmt(data.saldoAkhir);
+
+    const masuk = data.rincianMasuk || [];
+    const keluar = data.rincianKeluar || [];
+    const bm = document.getElementById("kasBodyMasuk");
+    const bk = document.getElementById("kasBodyKeluar");
+    if (bm) {
+      bm.innerHTML = masuk.length
+        ? masuk.map((r) => `<tr><td>${esc(r.tanggal)}</td><td>${esc(r.uraian)}</td><td class="text-end fw-bold text-success">${fmt(r.nominal)}</td></tr>`).join("")
+        : '<tr class="kas-empty-row"><td colspan="3">Tidak ada pemasukan</td></tr>';
+    }
+    if (bk) {
+      bk.innerHTML = keluar.length
+        ? keluar.map((r) => `<tr><td>${esc(r.tanggal)}</td><td>${esc(r.uraian)}</td><td class="text-end fw-bold text-danger">${fmt(r.nominal)}</td></tr>`).join("")
+        : '<tr class="kas-empty-row"><td colspan="3">Tidak ada pengeluaran</td></tr>';
+    }
+  };
+
+  const fetchKasReport = (cacheKey, bulan, tahun, background) => {
+    const loading = document.getElementById("kasLoadingState");
+    const reportBox = document.getElementById("kasReportBox");
+    const emptyState = document.getElementById("kasEmptyState");
+    const btn = document.getElementById("kasBtnCari");
+
+    if (!background) {
+      if (reportBox) reportBox.style.display = "none";
+      if (emptyState) emptyState.style.display = "none";
+      const updatedAtEl = document.getElementById("kasUpdatedAt");
+      if (updatedAtEl) updatedAtEl.style.display = "none";
+      if (loading) loading.style.display = "flex";
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Memuat'; }
+    }
 
     if (!cfg.APPS_SCRIPT_URL) {
       if (loading) loading.style.display = "none";
@@ -675,62 +658,41 @@
       return;
     }
 
-    fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=publicKasReport&bulan=${encodeURIComponent(b)}&tahun=${encodeURIComponent(t)}`)
+    fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=publicKasReport&bulan=${encodeURIComponent(bulan)}&tahun=${encodeURIComponent(tahun)}`)
       .then((res) => {
         if (!res.ok) throw new Error("Gagal memuat laporan.");
         return res.json();
       })
       .then((data) => {
-        if (loading) loading.style.display = "none";
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-search"></i> Cari'; }
-        if (!data.ok || (!data.rincianMasuk.length && !data.rincianKeluar.length && data.saldoAwal === 0)) {
-          if (emptyState) emptyState.style.display = "flex";
+        if (!background) {
+          if (loading) loading.style.display = "none";
+          if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-search"></i> Cari'; }
+        }
+        const masuk = data.rincianMasuk || [];
+        const keluar = data.rincianKeluar || [];
+        if (!data.ok || (!masuk.length && !keluar.length && data.saldoAwal === 0)) {
+          if (!background && emptyState) emptyState.style.display = "flex";
           return;
         }
-        if (reportBox) reportBox.style.display = "block";
-        const updatedTimeEl = document.getElementById("kasUpdatedTime");
-        if (updatedAtEl && updatedTimeEl) {
-          const d = data.updatedAt ? new Date(data.updatedAt) : new Date();
-          updatedTimeEl.textContent = d.toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
-          updatedAtEl.style.display = "flex";
-        }
-        const fmt = (n) => "Rp " + Number(n).toLocaleString("id-ID");
-        const sa = document.getElementById("kasSaldoAwal");
-        const tm = document.getElementById("kasTotalMasuk");
-        const tk = document.getElementById("kasTotalKeluar");
-        const sk = document.getElementById("kasSaldoAkhir");
-        if (sa) sa.textContent = fmt(data.saldoAwal);
-        if (tm) tm.textContent = fmt(data.totalMasuk);
-        if (tk) tk.textContent = fmt(data.totalKeluar);
-        if (sk) sk.textContent = fmt(data.saldoAkhir);
-
-        const bm = document.getElementById("kasBodyMasuk");
-        const bk = document.getElementById("kasBodyKeluar");
-        if (bm) {
-          bm.innerHTML = data.rincianMasuk.length
-            ? data.rincianMasuk.map((r) => `<tr><td>${esc(r.tanggal)}</td><td>${esc(r.uraian)}</td><td class="text-end fw-bold text-success">${fmt(r.nominal)}</td></tr>`).join("")
-            : '<tr class="kas-empty-row"><td colspan="3">Tidak ada pemasukan</td></tr>';
-        }
-        if (bk) {
-          bk.innerHTML = data.rincianKeluar.length
-            ? data.rincianKeluar.map((r) => `<tr><td>${esc(r.tanggal)}</td><td>${esc(r.uraian)}</td><td class="text-end fw-bold text-danger">${fmt(r.nominal)}</td></tr>`).join("")
-            : '<tr class="kas-empty-row"><td colspan="3">Tidak ada pengeluaran</td></tr>';
-        }
+        renderKasData(data);
+        cacheWrite(cacheKey, data);
       })
       .catch(() => {
-        if (loading) loading.style.display = "none";
-        if (emptyState) emptyState.style.display = "flex";
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-search"></i> Cari'; }
+        if (!background) {
+          if (loading) loading.style.display = "none";
+          if (emptyState) emptyState.style.display = "flex";
+          if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-search"></i> Cari'; }
+        }
       });
   };
 
-  const renderContent = (data = fallback) => {
-    renderHero(data.himbauan || fallback.himbauan);
-    renderAnnouncements(data.announcements || fallback.announcements);
-    renderNews(data.news || fallback.news);
-    renderFacilities(data.facilities || fallback.facilities);
-    renderOrganization(data.organization || fallback.organization);
-    renderGallery(data.gallery || fallback.gallery);
+  const renderContent = (data = {}) => {
+    renderHero(data.himbauan);
+    renderAnnouncements(data.announcements);
+    renderNews(data.news);
+    renderFacilities(data.facilities);
+    renderOrganization(data.organization);
+    renderGallery(data.gallery);
     updateStats(data);
   };
 
@@ -778,7 +740,7 @@
 
     const kasBtn = document.getElementById("kasBtnCari");
     if (kasBtn) {
-      kasBtn.addEventListener("click", () => renderKasReport());
+      kasBtn.addEventListener("click", () => renderKasReport(undefined, undefined, true));
     }
 
     const galleryContainer = document.getElementById("galleryContainer");
@@ -846,20 +808,114 @@
     return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
   };
 
-  const loadPublicContent = () => {
+  const CACHE_VERSION = "v1";
+  const CACHE_TTL_CONTENT = 15 * 60 * 1000;
+  const CACHE_TTL_KAS = 30 * 60 * 1000;
+
+  const cacheRead = (key) => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const entry = JSON.parse(raw);
+      if (!entry || typeof entry.savedAt !== "number" || !entry.data) return null;
+      return entry;
+    } catch {
+      return null;
+    }
+  };
+
+  const cacheWrite = (key, data) => {
+    try {
+      localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data }));
+    } catch {
+      // kuota penuh / mode pribadi: simpanan diabaikan
+    }
+  };
+
+  const cacheRemove = (key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // abaikan
+    }
+  };
+
+  const cacheIsFresh = (entry, ttl) => Boolean(entry) && Date.now() - entry.savedAt <= ttl;
+
+  const removeErrorBanner = () => {
+    document.getElementById("errorBanner")?.remove();
+  };
+
+  const renderErrorState = (message = "Gagal memuat data.", { retry = false } = {}) => {
+    removeErrorBanner();
+    const main = document.getElementById("mainContent");
+    if (!main) return;
+    const banner = document.createElement("div");
+    banner.id = "errorBanner";
+    banner.className = "error-banner";
+    banner.setAttribute("role", "alert");
+    banner.innerHTML = `
+      <i class="bi bi-wifi-off"></i>
+      <div class="error-banner-text">
+        <strong>Data belum dapat dimuat</strong>
+        <p>${esc(message)}</p>
+      </div>
+      ${retry ? '<button type="button" class="btn btn-outline-danger btn-sm" id="errorRetryBtn"><i class="bi bi-arrow-clockwise"></i> Coba Lagi</button>' : ""}`;
+    main.prepend(banner);
+    if (retry) {
+      banner.querySelector("#errorRetryBtn")?.addEventListener("click", () => {
+        clearContainers();
+        loadPublicContent(true);
+      });
+    }
+  };
+
+  const loadPublicContent = (force = false) => {
+    removeErrorBanner();
+
     if (!cfg.APPS_SCRIPT_URL) {
-      renderContent(fallback);
+      renderErrorState("Konfigurasi data tidak tersedia. Hubungi pengurus RW.");
+      hidePreloader();
       return;
     }
 
+    const cacheKey = `rw26.content.${CACHE_VERSION}`;
+    if (force) cacheRemove(cacheKey);
+
+    const cached = cacheRead(cacheKey);
+    if (cached) {
+      renderContent(cached.data);
+      hidePreloader();
+      if (cacheIsFresh(cached, CACHE_TTL_CONTENT)) return;
+      fetchPublicContent(cacheKey, true);
+      return;
+    }
+
+    fetchPublicContent(cacheKey, false);
+  };
+
+  const fetchPublicContent = (cacheKey, background) => {
     const action = encodeURIComponent(cfg.PUBLIC_ACTION || "publicContent");
     fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=${action}`)
       .then((res) => {
         if (!res.ok) throw new Error("Gagal memuat data publik.");
         return res.json();
       })
-      .then((data) => renderContent(data?.ok ? data : fallback))
-      .catch(() => renderContent(fallback));
+      .then((data) => {
+        if (data?.ok) {
+          renderContent(data);
+          cacheWrite(cacheKey, data);
+        } else if (!background) {
+          renderErrorState("Data dari server tidak valid. Silakan coba lagi.", { retry: true });
+        }
+        if (!background) hidePreloader();
+      })
+      .catch(() => {
+        if (!background) {
+          renderErrorState("Gagal memuat data. Periksa koneksi internet Anda.", { retry: true });
+          hidePreloader();
+        }
+      });
   };
 
   const initDarkMode = () => {
@@ -900,16 +956,16 @@
     els.forEach((el) => observer.observe(el));
   };
 
-  window.addEventListener("load", () => {
+  let preloaderHidden = false;
+  const hidePreloader = () => {
     const preloader = document.getElementById("preloader");
-    if (!preloader) return;
-    const elapsed = Date.now() - pageLoadStart;
-    const remaining = Math.max(0, 3000 - elapsed);
-    setTimeout(() => {
-      preloader.classList.add("hide");
-      setTimeout(() => preloader.remove(), 450);
-    }, remaining);
-  });
+    if (preloaderHidden || !preloader) return;
+    preloaderHidden = true;
+    preloader.classList.add("hide");
+    setTimeout(() => preloader.remove(), 450);
+  };
+
+  setTimeout(hidePreloader, 15000);
 
   document.addEventListener("DOMContentLoaded", () => {
     if (year) year.textContent = new Date().getFullYear();

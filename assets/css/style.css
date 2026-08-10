@@ -1281,6 +1281,64 @@ p {
   font-weight: 700;
 }
 
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--rose);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.error-banner > i {
+  font-size: 1.6rem;
+  color: var(--rose);
+}
+
+.error-banner-text {
+  flex: 1 1 240px;
+}
+
+.error-banner-text strong {
+  display: block;
+  color: var(--ink);
+}
+
+.error-banner-text p {
+  margin: 2px 0 0;
+  color: var(--muted);
+}
+
+.hero-empty {
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  border-radius: 22px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  text-align: center;
+  font-weight: 700;
+}
+
+.hero-empty i {
+  font-size: 2rem;
+  color: var(--primary);
+}
+
+.hero-empty p {
+  margin: 0;
+}
+
 /* ── Laporan Keuangan ── */
 .kas-filter {
   max-width: 500px;
@@ -2152,10 +2210,26 @@ p {
 [data-theme="dark"] .contact-list a,
 [data-theme="dark"] .contact-list div,
 [data-theme="dark"] .loading-state,
-[data-theme="dark"] .empty-state {
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .hero-empty {
   background: var(--surface);
   border-color: var(--line);
   color: var(--ink);
+}
+
+[data-theme="dark"] .error-banner {
+  background: var(--surface);
+  border-color: var(--line);
+  border-left-color: var(--rose);
+}
+
+[data-theme="dark"] .error-banner-text p {
+  color: var(--muted);
+}
+
+[data-theme="dark"] .hero-empty {
+  background: var(--surface-soft);
+  color: var(--muted);
 }
 
 [data-theme="dark"] .footer {
