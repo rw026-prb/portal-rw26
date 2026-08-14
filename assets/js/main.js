@@ -124,10 +124,23 @@
   const emptyMarkup = (label) => `<div class="col-12"><div class="empty-state">${esc(label)}</div></div>`;
 
   const clearContainers = () => {
-    ["facilityList"].forEach((id) => {
+    const carousel = document.getElementById("infoCarousel");
+    const heroPanel = carousel?.closest(".hero-panel");
+    if (carousel) carousel.style.display = "none";
+    heroPanel?.querySelector(".hero-empty")?.remove();
+    if (heroPanel) {
+      heroPanel.insertAdjacentHTML("beforeend", `
+        <div class="hero-empty hero-loading" role="status">
+          <span class="spinner-border" aria-hidden="true"></span>
+          <p>Memuat informasi terbaru...</p>
+        </div>`);
+    }
+    ["facilityList", "statsContainer"].forEach((id) => {
       const el = document.getElementById(id);
-      if (el) el.innerHTML = loadingMarkup();
+      if (el) el.innerHTML = loadingMarkup(id === "statsContainer" ? "Memuat statistik..." : "Memuat fasilitas...");
     });
+    const statistics = document.querySelector(".statistics");
+    if (statistics) statistics.style.display = "";
     const announceSidebar = document.getElementById("announcementSidebar");
     if (announceSidebar) announceSidebar.innerHTML = "";
     const announceMain = document.getElementById("announcementMainContent");
@@ -280,7 +293,7 @@
       mainContent.innerHTML = `
         <article class="news-main-article">
           <div class="news-main-meta">
-            <span class="news-main-category" style="background:${accentColors[idx % accentColors.length]}">${esc(item.kategori || "Berita")}</span>
+            <span class="news-main-category" style="background:${accentColors[idx % accentColors.length]}">${esc(item.kategori || item.category || "Berita")}</span>
             <span class="news-main-date"><i class="bi bi-calendar2-week"></i> ${esc(formatDate(item.tanggal))}</span>
           </div>
           <h3 class="news-main-title">${esc(item.judul || "Berita RW 026")}</h3>
@@ -383,25 +396,14 @@
     }
 
     target.innerHTML = active.map((album, albumIdx) => {
-      const photos = album.photos || [];
-      const total = photos.length;
-      const take = total >= 4 ? 4 : total;
-      const cells = photos.slice(0, take);
-      let gridClass = "";
-      if (total === 1) gridClass = "album-card-grid--1";
-      else if (total === 2) gridClass = "album-card-grid--2";
-      else if (total === 3) gridClass = "album-card-grid--3";
-      else gridClass = "album-card-grid--4";
-
+      const total = Number(album.photoCount ?? album.photos?.length ?? 0);
+      const thumbnail = album.thumbnailId ? { fileId: album.thumbnailId } : album.photos?.[0];
+      if (!thumbnail || !total) return "";
       return `
-        <article class="album-card" data-album-index="${albumIdx}">
+        <article class="album-card" data-album-index="${albumIdx}" tabindex="0" role="button" aria-label="Buka album ${esc(album.nama || "galeri")}">
           <div class="album-card-cover">
-            <div class="album-card-grid ${gridClass}">
-              ${cells.map((photo, i) => `
-                <div class="album-card-grid-cell${i === 0 && total === 3 ? " album-card-grid-cell--wide" : ""}">
-                  <img src="${esc(imageUrl(photo))}" alt="" loading="lazy">
-                </div>
-              `).join("")}
+            <div class="album-card-grid album-card-grid--1">
+              <div class="album-card-grid-cell"><img src="${esc(imageUrl(thumbnail, "w600"))}" alt="" loading="lazy"></div>
             </div>
             <div class="album-card-count-overlay"><span>${total} foto</span></div>
           </div>
@@ -410,7 +412,31 @@
             ${album.deskripsi ? `<p>${esc(album.deskripsi)}</p>` : ""}
           </div>
         </article>`;
-    }).join("");
+    }).join("") || emptyMarkup("Belum ada foto kegiatan.");
+  };
+
+  const loadGalleryAlbum = (albumIdx) => {
+    const album = galleryData[albumIdx];
+    if (!album) return;
+    if (Array.isArray(album.photos)) {
+      openLightbox(galleryData, albumIdx, 0);
+      return;
+    }
+    const card = document.querySelector(`.album-card[data-album-index="${albumIdx}"]`);
+    if (card) card.setAttribute("aria-busy", "true");
+    const action = encodeURIComponent("publicGalleryPhotos");
+    fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=${action}&albumId=${encodeURIComponent(album.id)}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Gagal memuat album.");
+        return res.json();
+      })
+      .then((data) => {
+        if (!data?.ok || !Array.isArray(data.photos) || !data.photos.length) throw new Error("Foto album tidak tersedia.");
+        album.photos = data.photos;
+        openLightbox(galleryData, albumIdx, 0);
+      })
+      .catch(() => renderErrorState("Foto album belum dapat dimuat. Silakan coba lagi."))
+      .finally(() => card?.removeAttribute("aria-busy"));
   };
 
   const openLightbox = (source, albumIdx, photoIdx) => {
@@ -745,10 +771,14 @@
 
     const galleryContainer = document.getElementById("galleryContainer");
     if (galleryContainer) {
-      galleryContainer.addEventListener("click", (e) => {
-        const card = e.target.closest(".album-card");
-        if (card) {
-          openLightbox(galleryData, parseInt(card.dataset.albumIndex, 10), 0);
+      const openAlbumFromCard = (card) => {
+        if (card) loadGalleryAlbum(parseInt(card.dataset.albumIndex, 10));
+      };
+      galleryContainer.addEventListener("click", (e) => openAlbumFromCard(e.target.closest(".album-card")));
+      galleryContainer.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openAlbumFromCard(e.target.closest(".album-card"));
         }
       });
     }
@@ -863,10 +893,7 @@
       ${retry ? '<button type="button" class="btn btn-outline-danger btn-sm" id="errorRetryBtn"><i class="bi bi-arrow-clockwise"></i> Coba Lagi</button>' : ""}`;
     main.prepend(banner);
     if (retry) {
-      banner.querySelector("#errorRetryBtn")?.addEventListener("click", () => {
-        clearContainers();
-        loadPublicContent(true);
-      });
+      banner.querySelector("#errorRetryBtn")?.addEventListener("click", () => loadPublicContent(true));
     }
   };
 
@@ -874,18 +901,19 @@
     removeErrorBanner();
 
     if (!cfg.APPS_SCRIPT_URL) {
-      renderErrorState("Konfigurasi data tidak tersedia. Hubungi pengurus RW.");
-      hidePreloader();
+      renderErrorState("Konfigurasi data tidak tersedia. Hubungi pengurus RW.", { retry: true });
       return;
     }
 
     const cacheKey = `rw26.content.${CACHE_VERSION}`;
-    if (force) cacheRemove(cacheKey);
+    if (force) {
+      cacheRemove(cacheKey);
+      clearContainers();
+    }
 
     const cached = cacheRead(cacheKey);
     if (cached) {
       renderContent(cached.data);
-      hidePreloader();
       if (cacheIsFresh(cached, CACHE_TTL_CONTENT)) return;
       fetchPublicContent(cacheKey, true);
       return;
@@ -908,12 +936,10 @@
         } else if (!background) {
           renderErrorState("Data dari server tidak valid. Silakan coba lagi.", { retry: true });
         }
-        if (!background) hidePreloader();
       })
       .catch(() => {
         if (!background) {
           renderErrorState("Gagal memuat data. Periksa koneksi internet Anda.", { retry: true });
-          hidePreloader();
         }
       });
   };
@@ -956,16 +982,12 @@
     els.forEach((el) => observer.observe(el));
   };
 
-  let preloaderHidden = false;
-  const hidePreloader = () => {
+  const dismissPreloader = () => {
     const preloader = document.getElementById("preloader");
-    if (preloaderHidden || !preloader) return;
-    preloaderHidden = true;
+    if (!preloader || preloader.classList.contains("hide")) return;
     preloader.classList.add("hide");
     setTimeout(() => preloader.remove(), 450);
   };
-
-  setTimeout(hidePreloader, 15000);
 
   document.addEventListener("DOMContentLoaded", () => {
     if (year) year.textContent = new Date().getFullYear();
@@ -975,6 +997,7 @@
     window.addEventListener("scroll", handleScroll, { passive: true });
     initDarkMode();
     initScrollReveal();
+    dismissPreloader();
     loadPublicContent();
     renderKasReport();
   });

@@ -1335,6 +1335,12 @@ p {
   color: var(--primary);
 }
 
+.hero-loading .spinner-border {
+  width: 2rem;
+  height: 2rem;
+  color: var(--primary);
+}
+
 .hero-empty p {
   margin: 0;
 }
@@ -2175,7 +2181,7 @@ p {
   background: var(--surface);
   border-color: var(--line);
 }
-[data-theme="dark"] . kas-select {
+[data-theme="dark"] .kas-select {
   background: var(--surface);
   border-color: var(--line);
   color: var(--ink);
