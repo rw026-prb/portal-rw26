@@ -13,6 +13,9 @@
   let lightboxSource = [];
   let currentAlbum = 0;
   let currentPhoto = 0;
+  let lightboxLoadId = 0;
+  let lightboxTrigger = null;
+  const galleryAlbumRequests = new Map();
 
   const placeholderImages = [
     "assets/images/slide-kerja-bakti.svg",
@@ -415,17 +418,57 @@
     }).join("") || emptyMarkup("Belum ada foto kegiatan.");
   };
 
-  const loadGalleryAlbum = (albumIdx) => {
+  const setLightboxLoading = (isLoading, label = "Memuat foto...") => {
+    const overlay = document.getElementById("lightboxOverlay");
+    const wrap = overlay?.querySelector(".lightbox-image-wrap");
+    if (!overlay || !wrap) return;
+    overlay.classList.toggle("is-loading", isLoading);
+    wrap.setAttribute("aria-busy", String(isLoading));
+    overlay.querySelector(".lightbox-loading-text").textContent = label;
+  };
+
+  const showLightbox = () => {
+    const overlay = document.getElementById("lightboxOverlay");
+    if (!overlay) return;
+    overlay.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    requestAnimationFrame(() => overlay.classList.add("is-open"));
+    overlay.querySelector(".lightbox-close")?.focus();
+  };
+
+  const openGalleryLoading = (albumIdx, trigger) => {
+    const album = galleryData[albumIdx];
+    if (!album) return;
+    ++lightboxLoadId;
+    lightboxSource = galleryData;
+    currentAlbum = albumIdx;
+    currentPhoto = 0;
+    lightboxTrigger = trigger || document.activeElement;
+    const overlay = document.getElementById("lightboxOverlay");
+    overlay.querySelector(".lightbox-image").removeAttribute("src");
+    overlay.querySelector(".lightbox-image").alt = "";
+    overlay.querySelector(".lightbox-counter").textContent = "";
+    overlay.querySelector(".lightbox-name").textContent = album.nama || "";
+    updateNavButtons();
+    setLightboxLoading(true, "Memuat foto album...");
+    showLightbox();
+  };
+
+  const loadGalleryAlbum = (albumIdx, trigger) => {
     const album = galleryData[albumIdx];
     if (!album) return;
     if (Array.isArray(album.photos)) {
-      openLightbox(galleryData, albumIdx, 0);
+      openLightbox(galleryData, albumIdx, 0, trigger);
       return;
     }
+
+    openGalleryLoading(albumIdx, trigger);
+    if (galleryAlbumRequests.has(albumIdx)) return;
+
     const card = document.querySelector(`.album-card[data-album-index="${albumIdx}"]`);
-    if (card) card.setAttribute("aria-busy", "true");
+    card?.setAttribute("aria-busy", "true");
     const action = encodeURIComponent("publicGalleryPhotos");
-    fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=${action}&albumId=${encodeURIComponent(album.id)}`)
+    const request = fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=${action}&albumId=${encodeURIComponent(album.id)}`)
       .then((res) => {
         if (!res.ok) throw new Error("Gagal memuat album.");
         return res.json();
@@ -433,40 +476,61 @@
       .then((data) => {
         if (!data?.ok || !Array.isArray(data.photos) || !data.photos.length) throw new Error("Foto album tidak tersedia.");
         album.photos = data.photos;
-        openLightbox(galleryData, albumIdx, 0);
+        if (lightboxSource === galleryData && currentAlbum === albumIdx) openLightbox(galleryData, albumIdx, 0, trigger);
       })
-      .catch(() => renderErrorState("Foto album belum dapat dimuat. Silakan coba lagi."))
-      .finally(() => card?.removeAttribute("aria-busy"));
+      .catch(() => {
+        if (lightboxSource === galleryData && currentAlbum === albumIdx) setLightboxLoading(true, "Foto album belum dapat dimuat.");
+      })
+      .finally(() => {
+        galleryAlbumRequests.delete(albumIdx);
+        card?.removeAttribute("aria-busy");
+      });
+    galleryAlbumRequests.set(albumIdx, request);
   };
 
-  const openLightbox = (source, albumIdx, photoIdx) => {
+  const openLightbox = (source, albumIdx, photoIdx, trigger) => {
     const overlay = document.getElementById("lightboxOverlay");
-    const img = overlay.querySelector(".lightbox-image");
+    const img = overlay?.querySelector(".lightbox-image");
     lightboxSource = source;
     const album = lightboxSource[albumIdx];
-    if (!album || !album.photos[photoIdx]) return;
+    if (!overlay || !img || !album || !album.photos[photoIdx]) return;
 
     currentAlbum = albumIdx;
     currentPhoto = photoIdx;
-
+    lightboxTrigger = trigger || lightboxTrigger || document.activeElement;
     const photo = album.photos[photoIdx];
-    img.src = imageUrl(photo, "w2000");
-    img.alt = photo.name || "Foto kegiatan";
+    const src = imageUrl(photo, "w1200");
+    const loadId = ++lightboxLoadId;
 
     overlay.querySelector(".lightbox-counter").textContent = `${photoIdx + 1}/${album.photos.length}`;
     overlay.querySelector(".lightbox-name").textContent = album.nama || "";
-
     updateNavButtons();
-    document.body.style.overflow = "hidden";
-    requestAnimationFrame(() => {
-      overlay.classList.add("is-open");
-    });
+    setLightboxLoading(true);
+    showLightbox();
+
+    const preload = new Image();
+    preload.onload = async () => {
+      try { await preload.decode?.(); } catch {}
+      if (loadId !== lightboxLoadId) return;
+      img.src = src;
+      img.alt = photo.name || "Foto kegiatan";
+      setLightboxLoading(false);
+    };
+    preload.onerror = () => {
+      if (loadId === lightboxLoadId) setLightboxLoading(true, "Foto belum dapat dimuat.");
+    };
+    preload.src = src;
   };
 
   const closeLightbox = () => {
     const overlay = document.getElementById("lightboxOverlay");
+    if (!overlay) return;
+    ++lightboxLoadId;
     overlay.classList.remove("is-open");
+    overlay.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
+    lightboxTrigger?.focus?.();
+    lightboxTrigger = null;
   };
 
   const navigateLightbox = (dir) => {
@@ -479,9 +543,14 @@
 
   const updateNavButtons = () => {
     const album = lightboxSource[currentAlbum];
-    if (!album) return;
     const prev = document.querySelector(".lightbox-prev");
     const next = document.querySelector(".lightbox-next");
+    if (!prev || !next) return;
+    if (!Array.isArray(album?.photos)) {
+      prev.classList.add("is-hidden");
+      next.classList.add("is-hidden");
+      return;
+    }
     prev.classList.toggle("is-hidden", currentPhoto === 0);
     next.classList.toggle("is-hidden", currentPhoto === album.photos.length - 1);
   };
@@ -772,7 +841,7 @@
     const galleryContainer = document.getElementById("galleryContainer");
     if (galleryContainer) {
       const openAlbumFromCard = (card) => {
-        if (card) loadGalleryAlbum(parseInt(card.dataset.albumIndex, 10));
+        if (card) loadGalleryAlbum(parseInt(card.dataset.albumIndex, 10), card);
       };
       galleryContainer.addEventListener("click", (e) => openAlbumFromCard(e.target.closest(".album-card")));
       galleryContainer.addEventListener("keydown", (e) => {
