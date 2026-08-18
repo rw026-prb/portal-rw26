@@ -691,6 +691,73 @@
     fetchKasReport(cacheKey, b, t, false);
   };
 
+  const initKasArus = () => {
+    const namaBulan = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    [["kasArusBulanAwal", start.getMonth()], ["kasArusBulanAkhir", now.getMonth()]].forEach(([id, selected]) => {
+      const el = document.getElementById(id);
+      if (!el || el.options.length) return;
+      namaBulan.forEach((nama, value) => el.add(new Option(nama, value, false, value === selected)));
+    });
+    [["kasArusTahunAwal", start.getFullYear()], ["kasArusTahunAkhir", now.getFullYear()]].forEach(([id, selected]) => {
+      const el = document.getElementById(id);
+      if (!el || el.options.length) return;
+      for (let year = now.getFullYear() - 2; year <= now.getFullYear() + 1; year++) el.add(new Option(year, year, false, year === selected));
+    });
+  };
+
+  const monthRange = (startMonth, startYear, endMonth, endYear) => {
+    const months = [];
+    for (let year = startYear, month = startMonth; year < endYear || (year === endYear && month <= endMonth); month++) {
+      months.push({ bulan: month, tahun: year });
+      if (month === 11) { month = -1; year++; }
+    }
+    return months;
+  };
+
+  const renderKasArus = (items) => {
+    const fmt = (n) => "Rp " + Number(n).toLocaleString("id-ID");
+    const totalMasuk = items.reduce((sum, item) => sum + item.masuk, 0);
+    const totalKeluar = items.reduce((sum, item) => sum + item.keluar, 0);
+    const saldoAkhir = items.at(-1)?.saldoAkhir || 0;
+    document.getElementById("kasArusTotalMasuk").textContent = fmt(totalMasuk);
+    document.getElementById("kasArusTotalKeluar").textContent = fmt(totalKeluar);
+    document.getElementById("kasArusSaldoAkhir").textContent = fmt(saldoAkhir);
+    const max = Math.max(...items.flatMap((item) => [item.masuk, item.keluar, Math.abs(item.saldoAkhir)]), 1);
+    document.getElementById("kasArusChart").innerHTML = items.map((item) => `<div class="kas-arus-item"><div class="kas-arus-bars"><span class="kas-arus-bar kas-arus-bar-saldo" style="height:${Math.max(4, Math.abs(item.saldoAkhir) / max * 100)}%" title="Saldo: ${fmt(item.saldoAkhir)}"></span><span class="kas-arus-bar kas-arus-bar-masuk" style="height:${Math.max(4, item.masuk / max * 100)}%" title="Masuk: ${fmt(item.masuk)}"></span><span class="kas-arus-bar kas-arus-bar-keluar" style="height:${Math.max(4, item.keluar / max * 100)}%" title="Keluar: ${fmt(item.keluar)}"></span></div><small>${esc(item.label)}</small></div>`).join("");
+    document.getElementById("kasArusLegend").innerHTML = '<span><i class="kas-arus-bar-saldo"></i>Saldo</span><span><i class="kas-arus-bar-masuk"></i>Pemasukan</span><span><i class="kas-arus-bar-keluar"></i>Pengeluaran</span>';
+  };
+
+  const renderKasArusReport = () => {
+    const startMonth = Number(document.getElementById("kasArusBulanAwal").value);
+    const startYear = Number(document.getElementById("kasArusTahunAwal").value);
+    const endMonth = Number(document.getElementById("kasArusBulanAkhir").value);
+    const endYear = Number(document.getElementById("kasArusTahunAkhir").value);
+    const loading = document.getElementById("kasArusLoadingState");
+    const box = document.getElementById("kasArusBox");
+    const empty = document.getElementById("kasArusEmptyState");
+    const btn = document.getElementById("kasArusBtnCari");
+    if (startYear > endYear || (startYear === endYear && startMonth > endMonth)) { empty.style.display = "flex"; return; }
+    if (!cfg.APPS_SCRIPT_URL) { empty.style.display = "flex"; return; }
+    const months = monthRange(startMonth, startYear, endMonth, endYear);
+    const namaBulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    loading.style.display = "flex"; box.style.display = "none"; empty.style.display = "none"; btn.disabled = true;
+    Promise.all(months.map(({ bulan, tahun }) => fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=publicKasReport&bulan=${bulan}&tahun=${tahun}`).then((res) => res.ok ? res.json() : Promise.reject())))
+      .then((reports) => {
+        let saldo = 0;
+        const items = reports.map((report, index) => {
+          const data = report.ok ? report : {};
+          saldo = Number(data.saldoAkhir ?? saldo);
+          return { label: `${namaBulan[months[index].bulan]} ${months[index].tahun}`, masuk: Number(data.totalMasuk) || 0, keluar: Number(data.totalKeluar) || 0, saldoAkhir: saldo };
+        });
+        if (!items.some((item) => item.masuk || item.keluar || item.saldoAkhir)) { empty.style.display = "flex"; return; }
+        renderKasArus(items); box.style.display = "block";
+      })
+      .catch(() => { empty.style.display = "flex"; })
+      .finally(() => { loading.style.display = "none"; btn.disabled = false; });
+  };
+
   const renderKasData = (data) => {
     const reportBox = document.getElementById("kasReportBox");
     const emptyState = document.getElementById("kasEmptyState");
@@ -834,9 +901,20 @@
     }
 
     const kasBtn = document.getElementById("kasBtnCari");
-    if (kasBtn) {
-      kasBtn.addEventListener("click", () => renderKasReport(undefined, undefined, true));
-    }
+    if (kasBtn) kasBtn.addEventListener("click", () => renderKasReport(undefined, undefined, true));
+    const kasArusBtn = document.getElementById("kasArusBtnCari");
+    if (kasArusBtn) kasArusBtn.addEventListener("click", renderKasArusReport);
+    [["kasLaporanTab", "kasLaporanPanel"], ["kasArusTab", "kasArusPanel"]].forEach(([tabId, panelId]) => {
+      document.getElementById(tabId)?.addEventListener("click", () => {
+        [["kasLaporanTab", "kasLaporanPanel"], ["kasArusTab", "kasArusPanel"]].forEach(([id, panel]) => {
+          const active = id === tabId;
+          document.getElementById(id).classList.toggle("is-active", active);
+          document.getElementById(id).setAttribute("aria-selected", active);
+          document.getElementById(panel).hidden = !active;
+        });
+        if (panelId === "kasArusPanel") renderKasArusReport();
+      });
+    });
 
     const galleryContainer = document.getElementById("galleryContainer");
     if (galleryContainer) {
@@ -1003,13 +1081,11 @@
           renderContent(data);
           cacheWrite(cacheKey, data);
         } else if (!background) {
-          renderErrorState("Data dari server tidak valid. Silakan coba lagi.", { retry: true });
+          setTimeout(() => fetchPublicContent(cacheKey, false), 3000);
         }
       })
       .catch(() => {
-        if (!background) {
-          renderErrorState("Gagal memuat data. Periksa koneksi internet Anda.", { retry: true });
-        }
+        if (!background) setTimeout(() => fetchPublicContent(cacheKey, false), 3000);
       });
   };
 
@@ -1069,5 +1145,6 @@
     dismissPreloader();
     loadPublicContent();
     renderKasReport();
+    initKasArus();
   });
 })();

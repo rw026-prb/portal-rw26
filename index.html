@@ -238,6 +238,15 @@
             <p>Laporan keuangan resmi Rukun Warga 026.</p>
           </div>
         </div>
+        <div class="kas-tabs" role="tablist" aria-label="Jenis laporan keuangan">
+          <button type="button" class="kas-tab is-active" id="kasLaporanTab" role="tab" aria-selected="true" aria-controls="kasLaporanPanel">
+            <i class="bi bi-receipt"></i> Laporan Kas
+          </button>
+          <button type="button" class="kas-tab" id="kasArusTab" role="tab" aria-selected="false" aria-controls="kasArusPanel">
+            <i class="bi bi-graph-up-arrow"></i> Arus Kas
+          </button>
+        </div>
+        <div id="kasLaporanPanel" role="tabpanel" aria-labelledby="kasLaporanTab">
         <div class="kas-filter">
           <div class="kas-filter-inner">
             <div class="kas-filter-group">
@@ -315,6 +324,40 @@
         <div id="kasEmptyState" class="kas-empty">
           <i class="bi bi-inbox"></i>
           <p>Belum ada data keuangan untuk periode ini.</p>
+        </div>
+        </div>
+        <div id="kasArusPanel" role="tabpanel" aria-labelledby="kasArusTab" hidden>
+          <div class="kas-filter kas-arus-filter">
+            <div class="kas-filter-inner">
+              <div class="kas-filter-group">
+                <label for="kasArusBulanAwal"><i class="bi bi-calendar3"></i> Dari Bulan</label>
+                <select id="kasArusBulanAwal" class="kas-select"></select>
+              </div>
+              <div class="kas-filter-group">
+                <label for="kasArusTahunAwal"><i class="bi bi-calendar-event"></i> Tahun</label>
+                <select id="kasArusTahunAwal" class="kas-select"></select>
+              </div>
+              <div class="kas-filter-group">
+                <label for="kasArusBulanAkhir"><i class="bi bi-calendar3"></i> Sampai Bulan</label>
+                <select id="kasArusBulanAkhir" class="kas-select"></select>
+              </div>
+              <div class="kas-filter-group">
+                <label for="kasArusTahunAkhir"><i class="bi bi-calendar-event"></i> Tahun</label>
+                <select id="kasArusTahunAkhir" class="kas-select"></select>
+              </div>
+              <button type="button" id="kasArusBtnCari" class="kas-btn-search"><i class="bi bi-graph-up"></i> Tampilkan</button>
+            </div>
+          </div>
+          <div id="kasArusLoadingState" class="kas-loading" style="display:none;"><div class="spinner-border text-primary" role="status"></div><span>Memuat arus kas...</span></div>
+          <div id="kasArusBox" style="display:none;">
+            <div class="kas-summary-grid kas-arus-summary-grid">
+              <div class="kas-stat-card kas-total-masuk"><div class="kas-stat-icon"><i class="bi bi-arrow-down-circle"></i></div><small>Total Masuk</small><span id="kasArusTotalMasuk">Rp 0</span></div>
+              <div class="kas-stat-card kas-total-keluar"><div class="kas-stat-icon"><i class="bi bi-arrow-up-circle"></i></div><small>Total Keluar</small><span id="kasArusTotalKeluar">Rp 0</span></div>
+              <div class="kas-stat-card kas-saldo-akhir"><div class="kas-stat-icon"><i class="bi bi-wallet2"></i></div><small>Saldo Akhir</small><span id="kasArusSaldoAkhir">Rp 0</span></div>
+            </div>
+            <div class="kas-arus-card"><h6><i class="bi bi-graph-up-arrow"></i> Grafik Arus Kas</h6><div id="kasArusChart" class="kas-arus-chart" role="img" aria-label="Grafik arus kas"></div><div id="kasArusLegend" class="kas-arus-legend"></div></div>
+          </div>
+          <div id="kasArusEmptyState" class="kas-empty"><i class="bi bi-inbox"></i><p>Belum ada data arus kas untuk periode ini.</p></div>
         </div>
       </div>
     </section>
