@@ -156,6 +156,10 @@
     if (org) org.innerHTML = '<div class="loading-state">Memuat struktur pengurus...</div>';
     const gallery = document.getElementById("galleryContainer");
     if (gallery) gallery.innerHTML = loadingMarkup("Memuat galeri...");
+    const videoWrap = document.getElementById("heroVideoWrap");
+    if (videoWrap) videoWrap.style.display = "none";
+    const videoContainer = document.getElementById("videoContainer");
+    if (videoContainer) videoContainer.innerHTML = loadingMarkup("Memuat video...");
   };
 
   const renderHero = (items = []) => {
@@ -416,6 +420,102 @@
           </div>
         </article>`;
     }).join("") || emptyMarkup("Belum ada foto kegiatan.");
+  };
+
+  const videoData = [];
+  let currentVideoIndex = -1;
+
+  const youtubeVideoId = (url) => {
+    if (!url) return "";
+    const m = String(url).match(/(?:youtube\.com\/(?:watch\?.*?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : "";
+  };
+
+  const renderVideoCard = (video, idx) => {
+    const id = youtubeVideoId(video.url);
+    if (!id) return "";
+    return `
+      <article class="video-card" data-video-index="${idx}" tabindex="0" role="button" aria-label="Putar video ${esc(video.judul || "Sambutan")}">
+        <div class="video-card-cover">
+          <img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="${esc(video.judul || "Sambutan")}" loading="lazy">
+          <span class="video-card-play"><i class="bi bi-play-fill"></i></span>
+        </div>
+        <div class="video-card-body">
+          <h3>${esc(video.judul || "Video Sambutan")}</h3>
+          ${video.deskripsi ? `<p>${esc(video.deskripsi)}</p>` : ""}
+        </div>
+      </article>`;
+  };
+
+  const renderVideos = (items = []) => {
+    const container = document.getElementById("videoContainer");
+    if (!container) return;
+    videoData.length = 0;
+    (items || []).forEach((v) => { if (youtubeVideoId(v.url)) videoData.push(v); });
+    const wrap = document.getElementById("heroVideoWrap");
+    if (!videoData.length) {
+      if (wrap) wrap.style.display = "none";
+      container.innerHTML = "";
+      return;
+    }
+    if (wrap) wrap.style.display = "block";
+    container.innerHTML = videoData.map(renderVideoCard).join("");
+    const nav = document.getElementById("heroVideoNav");
+    if (nav) nav.style.display = videoData.length > 1 ? "flex" : "none";
+  };
+
+  const openVideo = (idx) => {
+    const video = videoData[idx];
+    const id = video && youtubeVideoId(video.url);
+    if (!video || !id) return;
+    currentVideoIndex = idx;
+    const overlay = document.getElementById("videoPlayer");
+    const frame = document.getElementById("videoEmbedFrame");
+    const caption = document.getElementById("videoPlayerCaption");
+    if (!overlay || !frame) return;
+    frame.src = `https://www.youtube-nocookie.com/embed/${id}?rel=0&autoplay=1`;
+    if (caption) caption.textContent = video.judul || "Video Sambutan";
+    overlay.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    requestAnimationFrame(() => overlay.classList.add("is-open"));
+  };
+
+  const closeVideo = () => {
+    const overlay = document.getElementById("videoPlayer");
+    const frame = document.getElementById("videoEmbedFrame");
+    if (!overlay) return;
+    overlay.classList.remove("is-open");
+    overlay.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    if (frame) frame.src = "";
+    currentVideoIndex = -1;
+  };
+
+  const scrollVideoTrack = (dir) => {
+    const track = document.getElementById("videoContainer");
+    if (!track) return;
+    const card = track.querySelector(".video-card");
+    const amount = (card ? card.offsetWidth + 24 : 340) * dir;
+    track.scrollBy({ left: amount, behavior: "smooth" });
+  };
+
+  const videoScrollStep = () => {
+    const track = document.getElementById("videoContainer");
+    if (!track) return;
+    document.getElementById("videoPrev")?.addEventListener("click", () => scrollVideoTrack(-1));
+    document.getElementById("videoNext")?.addEventListener("click", () => scrollVideoTrack(1));
+    track.addEventListener("click", (event) => {
+      const card = event.target.closest("[data-video-index]");
+      if (card) openVideo(Number(card.dataset.videoIndex));
+    });
+    track.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const card = event.target.closest("[data-video-index]");
+      if (card) {
+        event.preventDefault();
+        openVideo(Number(card.dataset.videoIndex));
+      }
+    });
   };
 
   const setLightboxLoading = (isLoading, label = "Memuat foto...") => {
@@ -855,6 +955,7 @@
     renderFacilities(data.facilities);
     renderOrganization(data.organization);
     renderGallery(data.gallery);
+    renderVideos(data.videos);
     updateStats(data);
   };
 
@@ -976,7 +1077,21 @@
         if (e.key === "ArrowLeft") navigateLightbox(-1);
         if (e.key === "ArrowRight") navigateLightbox(1);
       }
+      const videoOverlay = document.getElementById("videoPlayer");
+      if (videoOverlay && videoOverlay.classList.contains("is-open") && e.key === "Escape") {
+        closeVideo();
+      }
     });
+
+    const playOverlay = document.getElementById("videoPlayer");
+    if (playOverlay) {
+      playOverlay.addEventListener("click", (e) => {
+        if (e.target === playOverlay) closeVideo();
+      });
+      playOverlay.querySelector(".video-player-close")?.addEventListener("click", closeVideo);
+    }
+
+    videoScrollStep();
   };
 
   const fetchWithTimeout = (url, ms = 10000) => {
