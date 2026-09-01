@@ -1,0 +1,312 @@
+[33mcommit 986507c98e96397ed978f102bff6f418475e5d8a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Tue Sep 1 06:53:26 2026 +0700
+
+    tampilkan video sambutan di hero bawah carousel
+
+[33mcommit 635addddcec4b4aa5a19eae86414074f53b52930[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Tue Aug 18 11:14:12 2026 +0700
+
+    add arus kas dan hapus pop-up koneksi
+
+[33mcommit 570fffc1400ed6b08f9818c445bcb9dc31880d8b[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Aug 16 13:56:35 2026 +0700
+
+    catt statistik dan load galery album
+
+[33mcommit 88f2982e11ce8a9d46ece709db01a85d1c7284e1[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Fri Aug 14 20:43:18 2026 +0700
+
+    perbaiki load
+
+[33mcommit 65d3b788591808f1c577151921fd328974aee837[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Tue Aug 11 00:49:42 2026 +0700
+
+    preloader dan tambah cache
+
+[33mcommit 8b38345a0659172e0f95a1db8539ab75ec6d3b35[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 12 14:01:40 2026 +0700
+
+    penyesuaian ukuran gambar slide dan berita
+
+[33mcommit cec9e5a8bed42e6f1cc9aa3f5341ffc848eb3949[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 12 11:22:46 2026 +0700
+
+    tambah tanggal laporan kas
+
+[33mcommit f85b52b0aaee0a1c3ac94a439ca2b6316ec86a62[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 12 10:45:02 2026 +0700
+
+    edit url appscript baru
+
+[33mcommit e3d540615cdcbff3a3eb77b94234f710ff640308[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 12 07:12:02 2026 +0700
+
+    update tampilan2 mobile
+
+[33mcommit d5a5d39dec6fffbca99899e9261cd3e409f820e4[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 12 07:04:50 2026 +0700
+
+    update tampilan2
+
+[33mcommit d99664020d4b23f509e456cf783692d9ae518dab[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 12 06:48:49 2026 +0700
+
+    update tampilan
+
+[33mcommit 1aa85c7c497d1babf64cdea38dc2d25bd3e35706[m
+Merge: 80be13e 7624461
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sat Jul 11 23:31:53 2026 +0700
+
+    Merge branch 'main' of https://github.com/rw026-prb/portal-rw26
+
+[33mcommit 80be13ea293233d39a370876ad6256bab54a6c0a[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sat Jul 11 23:26:10 2026 +0700
+
+    update web all
+
+[33mcommit 7624461fef4cf3ebe43481fbeb8ca2e2a6832b2b[m
+Author: rw026-prb <rw026.pengasinan@gmail.com>
+Date:   Sat Jul 11 23:21:55 2026 +0700
+
+    Create CNAME
+
+[33mcommit a9a44865e430743e57e7efa3ad735ad29eb3fe0d[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jul 6 01:54:36 2026 +0700
+
+    justifi isi berita
+
+[33mcommit 35d4979892e47ffacedac82460677aca44cdba61[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jul 6 01:46:37 2026 +0700
+
+    urutan berita terkini
+
+[33mcommit bca75daaf634dede1b01646941fab05c0465752f[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jul 6 01:40:10 2026 +0700
+
+    ubah tampilan berita di mobile menjadi horizontal2
+
+[33mcommit f5d4fbf12598176fc8fc45fac130a4f4ea31902f[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jul 6 01:35:14 2026 +0700
+
+    ubah tampilan berita di mobile menjadi horizontal
+
+[33mcommit 8524f7823a019fe76376696096aa0b3eec0d683b[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jul 6 01:28:02 2026 +0700
+
+    ubah tampilan berita di mobile
+
+[33mcommit 4f7c8a10e173ac449852d7873242e63d9d1c389f[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jul 6 01:15:51 2026 +0700
+
+    ubah tampilan berita
+
+[33mcommit 18f057fcb6addaaa08304e53e7e17adcc10513f2[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 5 17:17:58 2026 +0700
+
+    text dark mode
+
+[33mcommit 14cf7f31cfaecdd6fee9cfc8798ab81b523a5986[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 5 16:56:08 2026 +0700
+
+    geser dark mode
+
+[33mcommit b73d01ddb98ad3b7534ff676a8f53e75fd36b762[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 5 16:46:45 2026 +0700
+
+    pengurus
+
+[33mcommit 7b8a5e274416398e1b996019de973cc18931f05b[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 5 16:43:06 2026 +0700
+
+    opsi A: accordion pengurus di tablet/mobile + grid 2 kolom mobile
+
+[33mcommit 76c27cdc74c7413c94dd9e559ef0bc8694639864[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 5 16:35:29 2026 +0700
+
+    trigger1
+
+[33mcommit 64f04db71f74bd530404941de6bb590a8d0e5c65[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 5 16:32:48 2026 +0700
+
+    trigger
+
+[33mcommit c4e993fbc1122ffbec0df8ec39de47a3f404f087[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 5 16:26:48 2026 +0700
+
+    dark mode + scroll animasi + timeout fetch + bersihkan html
+
+[33mcommit badffa0b4c01f575a7fc3ef2685b8c7ca0a35fb1[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 5 16:12:56 2026 +0700
+
+    trigger redeploy github pages
+
+[33mcommit 6d67abfe29e353d0537f9e41fc667b3d00b827ca[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 5 16:11:59 2026 +0700
+
+    trigger redeploy github pages
+
+[33mcommit 8ff512de586514779fc8f7bccd15691263f966cd[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 5 16:02:26 2026 +0700
+
+    logo
+
+[33mcommit f5f717fe7387eb364ad15eb2eb267e61ee199f1b[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jul 5 15:36:07 2026 +0700
+
+    ubah tampilan
+
+[33mcommit 92cdec6dfb5f07428a0c0a76ec595643287590ce[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sat Jul 4 01:14:24 2026 +0700
+
+    upgrade web
+
+[33mcommit c37c3a6e1180cc0af2ba9951249db8f4b2610a0b[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jun 29 16:52:30 2026 +0700
+
+    test-5
+
+[33mcommit 2e9904d847253baeecba4dad50a5900f1f81bd15[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jun 29 15:28:49 2026 +0700
+
+    test-4
+
+[33mcommit 1140c89442063300ed0dddc19ac796d1c6ffb56c[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jun 29 15:17:38 2026 +0700
+
+    test-3
+
+[33mcommit 20e23e2b5fbc62d481e1fbf77c3638554dac545d[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jun 29 15:10:36 2026 +0700
+
+    test lg2
+
+[33mcommit 88f75eb94c2aba4283884ec017ae890feaccc519[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jun 29 15:08:05 2026 +0700
+
+    test dulu
+
+[33mcommit be04dbac28aa41fcced6ab0fec60f896d71156f0[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jun 29 14:49:55 2026 +0700
+
+    balikawal
+
+[33mcommit a0ef19a05216f6dafd36efc805ffbb33bd46a60f[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jun 29 14:45:55 2026 +0700
+
+    revisi skrip
+
+[33mcommit c63407125ef4e7ca90c3757b859e39370e1b7f4b[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jun 29 14:14:35 2026 +0700
+
+    hide data static
+
+[33mcommit f719d986b98c7c44dd44e61fa2788127c0ef50c6[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jun 29 11:38:29 2026 +0700
+
+    style css
+
+[33mcommit fb7e5ca228099039f49c2b0b91f364499326252b[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jun 29 11:24:19 2026 +0700
+
+    hapus pintasan
+
+[33mcommit 38657b3bd7f1ca353a4e9479f36ce2b69f07ece2[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jun 29 11:05:07 2026 +0700
+
+    tambah fungsi button di main.js
+
+[33mcommit 027032f92c662341ce2476b1ae0d0a82a7504fe0[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Mon Jun 29 10:49:15 2026 +0700
+
+    ubah main js
+
+[33mcommit 62e9a8b20bbcfb14f4fab8a1b268b11319ba0a17[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jun 28 17:36:23 2026 +0700
+
+    ubah tampilan2
+
+[33mcommit b5b73a789ad33204f89011d20b81e995b25bceb6[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jun 28 17:33:28 2026 +0700
+
+    ubah tampilan
+
+[33mcommit dec11d9ac0414b259ee17b5d0c31a054f962591d[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jun 28 17:05:59 2026 +0700
+
+    edit config2
+
+[33mcommit 1b41b43590fdf6dd84b27bfe36daad4851c89cb5[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jun 28 17:01:41 2026 +0700
+
+    edit config
+
+[33mcommit 2df0d07808c4c1e6911d29bb88cbc6b82c5f914e[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Sun Jun 28 16:55:07 2026 +0700
+
+    link all menu
+
+[33mcommit 91d5b98e0ad4c35b992ce33f8646cc411c8b86a7[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Thu Jun 18 13:00:40 2026 +0700
+
+    updates web
+
+[33mcommit 4615ec96b0e0524c1b3e803d80ef1b3a6186d620[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Thu Jun 18 09:15:53 2026 +0700
+
+    tambah folder
+
+[33mcommit 12408bacbea5de718c7a1d46e2f1774e5b7c2ae5[m
+Author: sudrajatlatief9 <sudrajatlatief9@gmail.com>
+Date:   Wed Jun 17 17:05:31 2026 +0700
+
+    Initial website RW
