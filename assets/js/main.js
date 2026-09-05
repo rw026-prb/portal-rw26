@@ -1270,6 +1270,34 @@
     els.forEach((el) => observer.observe(el));
   };
 
+  const logPublicVisitor = () => {
+    try {
+      if (!cfg.APPS_SCRIPT_URL) return;
+      const now = Date.now();
+      const last = parseInt(localStorage.getItem("rw26_vlog_ts") || "0", 10);
+      if (last && now - last < 15 * 60 * 1000) return;
+      let sid = "";
+      try { sid = sessionStorage.getItem("rw26_vid") || ""; } catch {}
+      if (!sid) { sid = Math.random().toString(36).slice(2) + now.toString(36); try { sessionStorage.setItem("rw26_vid", sid); } catch {} }
+      localStorage.setItem("rw26_vlog_ts", String(now));
+      const payload = JSON.stringify({
+        action: "logVisitor",
+        page: location.pathname + location.hash || "/",
+        referrer: document.referrer || "",
+        ua: navigator.userAgent.slice(0, 400),
+        bahasa: navigator.language || "",
+        screen: (screen.width + "x" + screen.height),
+        sessionId: sid
+      });
+      if (navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: "text/plain;charset=utf-8" });
+        navigator.sendBeacon(cfg.APPS_SCRIPT_URL, blob);
+      } else {
+        fetch(cfg.APPS_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: payload, keepalive: true }).catch(() => {});
+      }
+    } catch {}
+  };
+
   const dismissPreloader = () => {
     const preloader = document.getElementById("preloader");
     if (!preloader || preloader.classList.contains("hide")) return;
@@ -1289,5 +1317,6 @@
     loadPublicContent();
     renderKasReport();
     initKasArus();
+    setTimeout(logPublicVisitor, 1200);
   });
 })();
