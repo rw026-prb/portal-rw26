@@ -79,14 +79,39 @@
   };
 
   const parseDate = (value) => {
+    if (!value) return new Date(0); // Return invalid date for empty values
+    
     if (typeof value === "string") {
-      const m = value.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      // Format 1: DD/MM/YYYY atau DD-MM-YYYY
+      let m = value.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
       if (m) {
         const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
         if (!Number.isNaN(d.getTime())) return d;
       }
+      
+      // Format 2: YYYY-MM-DD (format ISO)
+      m = value.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+      if (m) {
+        const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        if (!Number.isNaN(d.getTime())) return d;
+      }
+      
+      // Format 3: DD/MM/YY (2 digit tahun)
+      m = value.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2})$/);
+      if (m) {
+        const year = Number(m[3]) + (Number(m[3]) < 50 ? 2000 : 1900);
+        const d = new Date(year, Number(m[2]) - 1, Number(m[1]));
+        if (!Number.isNaN(d.getTime())) return d;
+      }
+      
+      // Coba parsing langsung
+      const d = new Date(value);
+      if (!Number.isNaN(d.getTime())) return d;
     }
-    return new Date(value);
+    
+    // Fallback: date object atau invalid
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? new Date(0) : d;
   };
 
   const formatDate = (value, withReadTime = false) => {
@@ -268,7 +293,28 @@
     const mainContent = document.getElementById("newsMainContent");
     if (!sidebar || !mainContent) return;
 
-    const active = (items || []).filter(isActive);
+    // Debug: tampilkan semua berita dan statusnya
+    console.log('Total berita diterima:', items?.length || 0);
+    console.log('Berita detail:', items?.map((item, idx) => ({
+      idx,
+      judul: item.judul,
+      status: item.status,
+      kategori: item.kategori || item.category,
+      tanggal: item.tanggal,
+      getDateResult: item.tanggal ? parseDate(item.tanggal) : 'kosong'
+    })));
+
+    // Sementara: tampilkan semua berita tanpa filter status untuk debugging
+    const active = (items || [])/*.filter(isActive)*/;
+    console.log('Berita aktif setelah filter:', active.length);
+    console.log('Berita aktif detail:', active.map((item, idx) => ({
+      idx,
+      judul: item.judul,
+      status: item.status,
+      tanggal: item.tanggal,
+      getDateValue: getDate(item)
+    })));
+
     if (!active.length) {
       mainContent.innerHTML = emptyMarkup("Belum ada berita aktif.");
       sidebar.innerHTML = "";
@@ -279,10 +325,14 @@
       const raw = item.tanggal || item.tgl || item.date || item.tanggal_terbit || "";
       if (!raw) return 0;
       const d = parseDate(raw);
-      return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+      const result = Number.isNaN(d.getTime()) ? 0 : d.getTime();
+      console.log(`getDate for "${item.judul}" (${raw}):`, result);
+      return result;
     };
 
+    console.log('Before sorting:', active.map(item => ({ judul: item.judul, date: item.tanggal, getDate: getDate(item) })));
     const sorted = [...active].sort((a, b) => getDate(b) - getDate(a));
+    console.log('After sorting:', sorted.map(item => ({ judul: item.judul, date: item.tanggal })));
     const accentColors = ["#e11d48", "#f59e0b", "#2563eb", "#eab308", "#16a34a"];
 
     sidebar.innerHTML = sorted.map((item, idx) => `
@@ -453,8 +503,12 @@
     videoData.length = 0;
     (items || []).forEach((v) => { if (youtubeVideoId(v.url)) videoData.push(v); });
     const wrap = document.getElementById("heroVideoWrap");
+    const autoWrap = document.getElementById("heroVideoAutoplay");
+    const autoFrame = document.getElementById("heroAutoplayFrame");
     if (!videoData.length) {
       if (wrap) wrap.style.display = "none";
+      if (autoWrap) autoWrap.style.display = "none";
+      if (autoFrame) autoFrame.src = "";
       container.innerHTML = "";
       return;
     }
@@ -462,33 +516,28 @@
     container.innerHTML = videoData.map(renderVideoCard).join("");
     const nav = document.getElementById("heroVideoNav");
     if (nav) nav.style.display = videoData.length > 1 ? "flex" : "none";
+    if (autoWrap && autoFrame) {
+      const autoItem = videoData.find((v) => v.autoplay) || null;
+      if (autoItem) {
+        const id = youtubeVideoId(autoItem.url);
+        if (id) { autoWrap.style.display = "block"; autoFrame.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0&loop=1&playlist=${id}`; }
+        else { autoWrap.style.display = "none"; autoFrame.src = ""; }
+      } else { autoWrap.style.display = "none"; autoFrame.src = ""; }
+    }
   };
 
-  const openVideo = (idx) => {
+  const playInlineVideo = (idx) => {
     const video = videoData[idx];
     const id = video && youtubeVideoId(video.url);
     if (!video || !id) return;
     currentVideoIndex = idx;
-    const overlay = document.getElementById("videoPlayer");
-    const frame = document.getElementById("videoEmbedFrame");
-    const caption = document.getElementById("videoPlayerCaption");
-    if (!overlay || !frame) return;
-    frame.src = `https://www.youtube-nocookie.com/embed/${id}?rel=0&autoplay=1`;
-    if (caption) caption.textContent = video.judul || "Video Sambutan";
-    overlay.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-    requestAnimationFrame(() => overlay.classList.add("is-open"));
-  };
-
-  const closeVideo = () => {
-    const overlay = document.getElementById("videoPlayer");
-    const frame = document.getElementById("videoEmbedFrame");
-    if (!overlay) return;
-    overlay.classList.remove("is-open");
-    overlay.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
-    if (frame) frame.src = "";
-    currentVideoIndex = -1;
+    const autoWrap = document.getElementById("heroVideoAutoplay");
+    const autoFrame = document.getElementById("heroAutoplayFrame");
+    if (!autoWrap || !autoFrame) return;
+    autoWrap.style.display = "block";
+    autoFrame.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=0&playsinline=1&rel=0`;
+    document.querySelectorAll(".video-card").forEach((c, i) => c.classList.toggle("is-active", i === idx));
+    autoWrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
   const scrollVideoTrack = (dir) => {
@@ -506,14 +555,14 @@
     document.getElementById("videoNext")?.addEventListener("click", () => scrollVideoTrack(1));
     track.addEventListener("click", (event) => {
       const card = event.target.closest("[data-video-index]");
-      if (card) openVideo(Number(card.dataset.videoIndex));
+      if (card) playInlineVideo(Number(card.dataset.videoIndex));
     });
     track.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" && event.key !== " ") return;
       const card = event.target.closest("[data-video-index]");
       if (card) {
         event.preventDefault();
-        openVideo(Number(card.dataset.videoIndex));
+        playInlineVideo(Number(card.dataset.videoIndex));
       }
     });
   };
@@ -1077,19 +1126,7 @@
         if (e.key === "ArrowLeft") navigateLightbox(-1);
         if (e.key === "ArrowRight") navigateLightbox(1);
       }
-      const videoOverlay = document.getElementById("videoPlayer");
-      if (videoOverlay && videoOverlay.classList.contains("is-open") && e.key === "Escape") {
-        closeVideo();
-      }
     });
-
-    const playOverlay = document.getElementById("videoPlayer");
-    if (playOverlay) {
-      playOverlay.addEventListener("click", (e) => {
-        if (e.target === playOverlay) closeVideo();
-      });
-      playOverlay.querySelector(".video-player-close")?.addEventListener("click", closeVideo);
-    }
 
     videoScrollStep();
   };

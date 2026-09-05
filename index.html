@@ -109,6 +109,9 @@
                 <button type="button" id="videoNext" class="video-nav-btn" aria-label="Video berikutnya"><i class="bi bi-chevron-right"></i></button>
               </div>
             </div>
+            <div id="heroVideoAutoplay" style="display:none; margin-bottom:20px">
+              <div class="video-embed-ratio"><iframe id="heroAutoplayFrame" src="" title="Video autoplay" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen playsinline></iframe></div>
+            </div>
             <div id="videoContainer" class="hero-video-track"></div>
           </div>
         </div>
@@ -436,14 +439,6 @@
 
   <a href="#kontak" id="floatingWA" class="floating-wa" aria-label="Hubungi RW 026"><i class="bi bi-whatsapp"></i></a>
   <button id="backToTop" class="back-to-top" type="button" aria-label="Kembali ke atas"><i class="bi bi-arrow-up"></i></button>
-
-  <div class="video-player-overlay" id="videoPlayer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Video sambutan">
-    <button class="video-player-close" type="button" aria-label="Tutup">&times;</button>
-    <div class="video-player-frame">
-      <div class="video-embed-ratio"><iframe id="videoEmbedFrame" src="" title="Video sambutan" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
-      <div class="video-player-caption" id="videoPlayerCaption"></div>
-    </div>
-  </div>
 
   <div id="lightboxOverlay" class="lightbox-overlay" role="dialog" aria-modal="true" aria-label="Galeri foto" aria-hidden="true">
     <button class="lightbox-close" type="button" aria-label="Tutup">&times;</button>
