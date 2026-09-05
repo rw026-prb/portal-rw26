@@ -293,27 +293,14 @@
     const mainContent = document.getElementById("newsMainContent");
     if (!sidebar || !mainContent) return;
 
-    // Debug: tampilkan semua berita dan statusnya
-    console.log('Total berita diterima:', items?.length || 0);
-    console.log('Berita detail:', items?.map((item, idx) => ({
-      idx,
-      judul: item.judul,
-      status: item.status,
-      kategori: item.kategori || item.category,
-      tanggal: item.tanggal,
-      getDateResult: item.tanggal ? parseDate(item.tanggal) : 'kosong'
-    })));
+    const getDate = (item) => {
+      const raw = item.tanggal || item.tgl || item.date || item.tanggal_terbit || "";
+      if (!raw) return 0;
+      const d = parseDate(raw);
+      return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+    };
 
-    // Sementara: tampilkan semua berita tanpa filter status untuk debugging
     const active = (items || [])/*.filter(isActive)*/;
-    console.log('Berita aktif setelah filter:', active.length);
-    console.log('Berita aktif detail:', active.map((item, idx) => ({
-      idx,
-      judul: item.judul,
-      status: item.status,
-      tanggal: item.tanggal,
-      getDateValue: getDate(item)
-    })));
 
     if (!active.length) {
       mainContent.innerHTML = emptyMarkup("Belum ada berita aktif.");
@@ -321,18 +308,7 @@
       return;
     }
 
-    const getDate = (item) => {
-      const raw = item.tanggal || item.tgl || item.date || item.tanggal_terbit || "";
-      if (!raw) return 0;
-      const d = parseDate(raw);
-      const result = Number.isNaN(d.getTime()) ? 0 : d.getTime();
-      console.log(`getDate for "${item.judul}" (${raw}):`, result);
-      return result;
-    };
-
-    console.log('Before sorting:', active.map(item => ({ judul: item.judul, date: item.tanggal, getDate: getDate(item) })));
     const sorted = [...active].sort((a, b) => getDate(b) - getDate(a));
-    console.log('After sorting:', sorted.map(item => ({ judul: item.judul, date: item.tanggal })));
     const accentColors = ["#e11d48", "#f59e0b", "#2563eb", "#eab308", "#16a34a"];
 
     sidebar.innerHTML = sorted.map((item, idx) => `
@@ -648,7 +624,7 @@
     currentPhoto = photoIdx;
     lightboxTrigger = trigger || lightboxTrigger || document.activeElement;
     const photo = album.photos[photoIdx];
-    const src = imageUrl(photo, "w1200");
+    const src = imageUrl(photo, "w800");
     const loadId = ++lightboxLoadId;
 
     overlay.querySelector(".lightbox-counter").textContent = `${photoIdx + 1}/${album.photos.length}`;
@@ -998,14 +974,17 @@
   };
 
   const renderContent = (data = {}) => {
-    renderHero(data.himbauan);
-    renderAnnouncements(data.announcements);
-    renderNews(data.news);
-    renderFacilities(data.facilities);
-    renderOrganization(data.organization);
-    renderGallery(data.gallery);
-    renderVideos(data.videos);
-    updateStats(data);
+    const tasks = [
+      () => renderHero(data.himbauan),
+      () => renderAnnouncements(data.announcements),
+      () => renderNews(data.news),
+      () => renderFacilities(data.facilities),
+      () => renderOrganization(data.organization),
+      () => renderGallery(data.gallery),
+      () => renderVideos(data.videos),
+      () => updateStats(data)
+    ];
+    tasks.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } });
   };
 
   const handleScroll = () => {
@@ -1131,7 +1110,7 @@
     videoScrollStep();
   };
 
-  const fetchWithTimeout = (url, ms = 10000) => {
+  const fetchWithTimeout = (url, ms = 15000) => {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), ms);
     return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
@@ -1221,8 +1200,9 @@
     fetchPublicContent(cacheKey, false);
   };
 
-  const fetchPublicContent = (cacheKey, background) => {
+  const fetchPublicContent = (cacheKey, background, attempt = 1) => {
     const action = encodeURIComponent(cfg.PUBLIC_ACTION || "publicContent");
+    const maxRetry = 3;
     fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=${action}`)
       .then((res) => {
         if (!res.ok) throw new Error("Gagal memuat data publik.");
@@ -1230,14 +1210,25 @@
       })
       .then((data) => {
         if (data?.ok) {
+          removeErrorBanner();
           renderContent(data);
           cacheWrite(cacheKey, data);
-        } else if (!background) {
-          setTimeout(() => fetchPublicContent(cacheKey, false), 3000);
+        } else {
+          throw new Error(data?.error || "Data tidak valid.");
         }
       })
-      .catch(() => {
-        if (!background) setTimeout(() => fetchPublicContent(cacheKey, false), 3000);
+      .catch((err) => {
+        if (background) {
+          console.error(err);
+          return;
+        }
+        if (attempt < maxRetry) {
+          const delay = attempt === 1 ? 3000 : 6000;
+          setTimeout(() => fetchPublicContent(cacheKey, false, attempt + 1), delay);
+        } else {
+          cacheRemove(cacheKey);
+          renderErrorState(err?.message || "Gagal memuat data. Periksa koneksi atau coba lagi.", { retry: true });
+        }
       });
   };
 
