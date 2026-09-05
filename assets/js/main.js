@@ -15,6 +15,8 @@
   let currentPhoto = 0;
   let lightboxLoadId = 0;
   let lightboxTrigger = null;
+  let galleryViewIdx = null;
+  let galleryViewTrigger = null;
   const galleryAlbumRequests = new Map();
 
   const placeholderImages = [
@@ -436,7 +438,7 @@
         <article class="album-card" data-album-index="${albumIdx}" tabindex="0" role="button" aria-label="Buka album ${esc(album.nama || "galeri")}">
           <div class="album-card-cover">
             <div class="album-card-grid album-card-grid--1">
-              <div class="album-card-grid-cell"><img src="${esc(imageUrl(thumbnail, "w600"))}" alt="" loading="lazy"></div>
+              <div class="album-card-grid-cell"><img src="${esc(imageUrl(thumbnail, "w400"))}" alt="" loading="lazy"></div>
             </div>
             <div class="album-card-count-overlay"><span>${total} foto</span></div>
           </div>
@@ -446,6 +448,31 @@
           </div>
         </article>`;
     }).join("") || emptyMarkup("Belum ada foto kegiatan.");
+  };
+
+  const showGalleryAlbumView = () => {
+    galleryViewIdx = null;
+    document.getElementById("galleryAlbumView")?.classList.remove("d-none");
+    document.getElementById("galleryPhotoView")?.classList.add("d-none");
+    galleryViewTrigger?.focus?.();
+    galleryViewTrigger = null;
+  };
+
+  const showGalleryGridView = (albumIdx) => {
+    const album = galleryData[albumIdx];
+    if (!album || !Array.isArray(album.photos) || !album.photos.length) return;
+    galleryViewIdx = albumIdx;
+    document.getElementById("galleryAlbumView")?.classList.add("d-none");
+    const view = document.getElementById("galleryPhotoView");
+    view?.classList.remove("d-none");
+    document.getElementById("photoAlbumTitle").textContent = album.nama || "Album";
+    document.getElementById("breadcrumbAlbumName").textContent = album.nama || "Album";
+    const grid = document.getElementById("photoGrid");
+    grid.innerHTML = album.photos.map((photo, idx) => `
+      <button type="button" data-photo-index="${idx}" aria-label="Lihat ${esc(photo.name || "foto " + (idx + 1))}">
+        <img src="${esc(imageUrl(photo, "w400"))}" alt="${esc(photo.name || "Foto kegiatan")}" loading="lazy">
+      </button>`).join("");
+    view?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const videoData = [];
@@ -561,33 +588,30 @@
     overlay.querySelector(".lightbox-close")?.focus();
   };
 
-  const openGalleryLoading = (albumIdx, trigger) => {
+  const openGalleryAlbumGrid = (albumIdx, trigger) => {
     const album = galleryData[albumIdx];
     if (!album) return;
-    ++lightboxLoadId;
-    lightboxSource = galleryData;
-    currentAlbum = albumIdx;
-    currentPhoto = 0;
-    lightboxTrigger = trigger || document.activeElement;
-    const overlay = document.getElementById("lightboxOverlay");
-    overlay.querySelector(".lightbox-image").removeAttribute("src");
-    overlay.querySelector(".lightbox-image").alt = "";
-    overlay.querySelector(".lightbox-counter").textContent = "";
-    overlay.querySelector(".lightbox-name").textContent = album.nama || "";
-    updateNavButtons();
-    setLightboxLoading(true, "Memuat foto album...");
-    showLightbox();
+    galleryViewTrigger = trigger || document.activeElement;
+    const target = document.getElementById("galleryAlbumView");
+    const grid = document.getElementById("photoGrid");
+    if (target && grid) {
+      grid.innerHTML = '<div class="col-12"><div class="loading-state"><span class="spinner-border spinner-border-sm me-2"></span>Memuat foto album...</div></div>';
+      document.getElementById("galleryPhotoView")?.classList.remove("d-none");
+      target.classList.add("d-none");
+      document.getElementById("photoAlbumTitle").textContent = album.nama || "Album";
+      document.getElementById("breadcrumbAlbumName").textContent = album.nama || "Album";
+    }
   };
 
   const loadGalleryAlbum = (albumIdx, trigger) => {
     const album = galleryData[albumIdx];
     if (!album) return;
     if (Array.isArray(album.photos)) {
-      openLightbox(galleryData, albumIdx, 0, trigger);
+      showGalleryGridView(albumIdx);
       return;
     }
 
-    openGalleryLoading(albumIdx, trigger);
+    openGalleryAlbumGrid(albumIdx, trigger);
     if (galleryAlbumRequests.has(albumIdx)) return;
 
     const card = document.querySelector(`.album-card[data-album-index="${albumIdx}"]`);
@@ -601,10 +625,12 @@
       .then((data) => {
         if (!data?.ok || !Array.isArray(data.photos) || !data.photos.length) throw new Error("Foto album tidak tersedia.");
         album.photos = data.photos;
-        if (lightboxSource === galleryData && currentAlbum === albumIdx) openLightbox(galleryData, albumIdx, 0, trigger);
+        if (galleryViewIdx === albumIdx || document.getElementById("galleryPhotoView")?.classList.contains("d-none") === false) showGalleryGridView(albumIdx);
+        else if (galleryViewIdx === null) showGalleryGridView(albumIdx);
       })
       .catch(() => {
-        if (lightboxSource === galleryData && currentAlbum === albumIdx) setLightboxLoading(true, "Foto album belum dapat dimuat.");
+        const grid = document.getElementById("photoGrid");
+        if (grid) grid.innerHTML = '<div class="col-12"><div class="empty-state">Foto album belum dapat dimuat.</div></div>';
       })
       .finally(() => {
         galleryAlbumRequests.delete(albumIdx);
@@ -1058,6 +1084,25 @@
         }
       });
     }
+
+    const photoGridEl = document.getElementById("photoGrid");
+    if (photoGridEl) {
+      photoGridEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-photo-index]");
+        if (!btn || galleryViewIdx === null) return;
+        const idx = parseInt(btn.dataset.photoIndex, 10);
+        openLightbox(galleryData, galleryViewIdx, idx, btn);
+      });
+      photoGridEl.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        const btn = e.target.closest("[data-photo-index]");
+        if (!btn || galleryViewIdx === null) return;
+        e.preventDefault();
+        openLightbox(galleryData, galleryViewIdx, parseInt(btn.dataset.photoIndex, 10), btn);
+      });
+    }
+    document.getElementById("backToAlbums")?.addEventListener("click", showGalleryAlbumView);
+    document.getElementById("breadcrumbAlbums")?.addEventListener("click", (e) => { e.preventDefault(); showGalleryAlbumView(); });
 
     const heroSlides = document.getElementById("heroSlides");
     if (heroSlides) {
