@@ -187,6 +187,10 @@
     if (videoWrap) videoWrap.style.display = "none";
     const videoContainer = document.getElementById("videoContainer");
     if (videoContainer) videoContainer.innerHTML = loadingMarkup("Memuat video...");
+    const kegiatanWrap = document.getElementById("kegiatanVideoWrap");
+    if (kegiatanWrap) kegiatanWrap.style.display = "none";
+    const kegiatanContainer = document.getElementById("kegiatanVideoContainer");
+    if (kegiatanContainer) kegiatanContainer.innerHTML = loadingMarkup("Memuat video kegiatan...");
   };
 
   const renderHero = (items = []) => {
@@ -454,8 +458,52 @@
     galleryViewIdx = null;
     document.getElementById("galleryAlbumView")?.classList.remove("d-none");
     document.getElementById("galleryPhotoView")?.classList.add("d-none");
+    const grid = document.getElementById("photoGrid");
+    if (grid) { grid.classList.remove("is-scrollable"); grid.style.maxHeight = ""; }
     galleryViewTrigger?.focus?.();
     galleryViewTrigger = null;
+  };
+
+  let photoGridResizeTimer = null;
+  const applyPhotoGrid5Rows = () => {
+    const grid = document.getElementById("photoGrid");
+    if (!grid || galleryViewIdx === null) return;
+    if (grid.classList.contains("d-none") || document.getElementById("galleryPhotoView")?.classList.contains("d-none")) return;
+    const btns = grid.querySelectorAll("[data-photo-index]");
+    if (!btns.length) { grid.classList.remove("is-scrollable"); grid.style.maxHeight = ""; return; }
+    const cs = getComputedStyle(grid);
+    const gap = parseFloat(cs.rowGap || cs.gap || "12") || 12;
+    let cols = cs.gridTemplateColumns.split(" ").filter(Boolean).length || 1;
+    if (!cols || cols < 1) cols = grid.clientWidth > 768 ? 4 : 2;
+    const rows = Math.ceil(btns.length / cols);
+    if (rows <= 5) { grid.classList.remove("is-scrollable"); grid.style.maxHeight = ""; return; }
+    let rowH = btns[0].offsetHeight || btns[0].getBoundingClientRect().height || 0;
+    if (!rowH || rowH < 20) {
+      const gw = grid.clientWidth || 600;
+      rowH = (gw - (cols - 1) * gap) / cols;
+    }
+    if (!rowH || rowH < 20) rowH = 160;
+    const maxH = Math.round(5 * rowH + 4 * gap);
+    grid.classList.add("is-scrollable");
+    grid.style.maxHeight = maxH + "px";
+    grid.scrollTop = 0;
+  };
+  const schedulePhotoGridLimit = () => {
+    clearTimeout(photoGridResizeTimer);
+    photoGridResizeTimer = setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(applyPhotoGrid5Rows)), 80);
+  };
+  let photoGridRetry = 0;
+  const ensurePhotoGridLimit = () => {
+    photoGridRetry = 0;
+    const tick = () => {
+      applyPhotoGrid5Rows();
+      const grid = document.getElementById("photoGrid");
+      const hasScrollable = grid?.classList.contains("is-scrollable");
+      const btn = grid?.querySelector("[data-photo-index]");
+      const h = btn?.offsetHeight || 0;
+      if (!hasScrollable && h < 20 && photoGridRetry < 6) { photoGridRetry++; setTimeout(tick, 120); }
+    };
+    requestAnimationFrame(() => requestAnimationFrame(tick));
   };
 
   const showGalleryGridView = (albumIdx) => {
@@ -473,6 +521,7 @@
         <img src="${esc(imageUrl(photo, "w400"))}" alt="${esc(photo.name || "Foto kegiatan")}" loading="lazy">
       </button>`).join("");
     view?.scrollIntoView({ behavior: "smooth", block: "start" });
+    ensurePhotoGridLimit();
   };
 
   const videoData = [];
@@ -566,6 +615,93 @@
       if (card) {
         event.preventDefault();
         playInlineVideo(Number(card.dataset.videoIndex));
+      }
+    });
+  };
+
+  const kegiatanVideoData = [];
+
+  const renderKegiatanVideoCard = (video, idx) => {
+    const id = youtubeVideoId(video.url);
+    if (!id) return "";
+    return `
+      <article class="video-card" data-kegiatan-video-index="${idx}" tabindex="0" role="button" aria-label="Putar video ${esc(video.judul || "Kegiatan")}">
+        <div class="video-card-cover">
+          <img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="${esc(video.judul || "Kegiatan")}" loading="lazy">
+          <span class="video-card-play"><i class="bi bi-play-fill"></i></span>
+        </div>
+        <div class="video-card-body">
+          <h3>${esc(video.judul || "Video Kegiatan")}</h3>
+          ${video.deskripsi ? `<p>${esc(video.deskripsi)}</p>` : ""}
+        </div>
+      </article>`;
+  };
+
+  const renderKegiatanVideos = (items = []) => {
+    const container = document.getElementById("kegiatanVideoContainer");
+    if (!container) return;
+    kegiatanVideoData.length = 0;
+    (items || []).forEach((v) => { if (youtubeVideoId(v.url)) kegiatanVideoData.push(v); });
+    const wrap = document.getElementById("kegiatanVideoWrap");
+    if (!kegiatanVideoData.length) {
+      if (wrap) wrap.style.display = "none";
+      container.innerHTML = "";
+      return;
+    }
+    if (wrap) wrap.style.display = "block";
+    container.innerHTML = kegiatanVideoData.map(renderKegiatanVideoCard).join("");
+    const nav = document.getElementById("kegiatanVideoNav");
+    if (nav) nav.style.display = kegiatanVideoData.length > 1 ? "flex" : "none";
+  };
+
+  const openKegiatanModal = (idx) => {
+    const video = kegiatanVideoData[idx];
+    const id = video && youtubeVideoId(video.url);
+    if (!video || !id) return;
+    const overlay = document.getElementById("kegiatanVideoOverlay");
+    const frame = document.getElementById("kegiatanVideoFrame");
+    const caption = document.getElementById("kegiatanVideoCaption");
+    if (!overlay || !frame) return;
+    if (caption) caption.textContent = video.judul || "";
+    frame.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=0&playsinline=1&rel=0`;
+    overlay.classList.add("is-open");
+    overlay.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeKegiatanModal = () => {
+    const overlay = document.getElementById("kegiatanVideoOverlay");
+    const frame = document.getElementById("kegiatanVideoFrame");
+    if (!overlay) return;
+    overlay.classList.remove("is-open");
+    overlay.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    if (frame) frame.src = "";
+  };
+
+  const scrollKegiatanTrack = (dir) => {
+    const track = document.getElementById("kegiatanVideoContainer");
+    if (!track) return;
+    const card = track.querySelector(".video-card");
+    const amount = (card ? card.offsetWidth + 24 : 340) * dir;
+    track.scrollBy({ left: amount, behavior: "smooth" });
+  };
+
+  const kegiatanVideoScrollStep = () => {
+    const track = document.getElementById("kegiatanVideoContainer");
+    if (!track) return;
+    document.getElementById("kegiatanVideoPrev")?.addEventListener("click", () => scrollKegiatanTrack(-1));
+    document.getElementById("kegiatanVideoNext")?.addEventListener("click", () => scrollKegiatanTrack(1));
+    track.addEventListener("click", (event) => {
+      const card = event.target.closest("[data-kegiatan-video-index]");
+      if (card) openKegiatanModal(Number(card.dataset.kegiatanVideoIndex));
+    });
+    track.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const card = event.target.closest("[data-kegiatan-video-index]");
+      if (card) {
+        event.preventDefault();
+        openKegiatanModal(Number(card.dataset.kegiatanVideoIndex));
       }
     });
   };
@@ -1008,6 +1144,7 @@
       () => renderOrganization(data.organization),
       () => renderGallery(data.gallery),
       () => renderVideos(data.videos),
+      () => renderKegiatanVideos(data.videoKegiatan || data.videosKegiatan || data.kegiatanVideos || []),
       () => updateStats(data)
     ];
     tasks.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } });
@@ -1152,7 +1289,23 @@
       }
     });
 
+    window.addEventListener("resize", schedulePhotoGridLimit);
     videoScrollStep();
+    kegiatanVideoScrollStep();
+    const kegiatanOverlay = document.getElementById("kegiatanVideoOverlay");
+    if (kegiatanOverlay) {
+      kegiatanOverlay.addEventListener("click", (e) => { if (e.target === kegiatanOverlay) closeKegiatanModal(); });
+      document.getElementById("kegiatanVideoClose")?.addEventListener("click", closeKegiatanModal);
+      document.getElementById("kegiatanVideoFullscreen")?.addEventListener("click", () => {
+        const frame = document.getElementById("kegiatanVideoFrame");
+        if (frame?.requestFullscreen) frame.requestFullscreen().catch(() => {});
+        else if (frame?.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+      });
+    }
+    document.addEventListener("keydown", (e) => {
+      const kOverlay = document.getElementById("kegiatanVideoOverlay");
+      if (kOverlay?.classList.contains("is-open") && e.key === "Escape") closeKegiatanModal();
+    });
   };
 
   const fetchWithTimeout = (url, ms = 15000) => {
