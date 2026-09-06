@@ -523,7 +523,7 @@
       const autoItem = videoData.find((v) => v.autoplay) || null;
       if (autoItem) {
         const id = youtubeVideoId(autoItem.url);
-        if (id) { autoWrap.style.display = "block"; autoFrame.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0&loop=1&playlist=${id}`; }
+        if (id) { autoWrap.style.display = "block"; autoFrame.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=0&playsinline=1&rel=0&loop=1&playlist=${id}`; }
         else { autoWrap.style.display = "none"; autoFrame.src = ""; }
       } else { autoWrap.style.display = "none"; autoFrame.src = ""; }
     }
