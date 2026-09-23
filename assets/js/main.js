@@ -978,6 +978,8 @@
     fetchKasReport(cacheKey, b, t, false);
   };
 
+  let kasArusChartInstance = null;
+
   const initKasArus = () => {
     const namaBulan = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
     const now = new Date();
@@ -1011,9 +1013,38 @@
     document.getElementById("kasArusTotalMasuk").textContent = fmt(totalMasuk);
     document.getElementById("kasArusTotalKeluar").textContent = fmt(totalKeluar);
     document.getElementById("kasArusSaldoAkhir").textContent = fmt(saldoAkhir);
-    const max = Math.max(...items.flatMap((item) => [item.masuk, item.keluar, Math.abs(item.saldoAkhir)]), 1);
-    document.getElementById("kasArusChart").innerHTML = items.map((item) => `<div class="kas-arus-item"><div class="kas-arus-bars"><span class="kas-arus-bar kas-arus-bar-saldo" style="height:${Math.max(4, Math.abs(item.saldoAkhir) / max * 100)}%" title="Saldo: ${fmt(item.saldoAkhir)}"></span><span class="kas-arus-bar kas-arus-bar-masuk" style="height:${Math.max(4, item.masuk / max * 100)}%" title="Masuk: ${fmt(item.masuk)}"></span><span class="kas-arus-bar kas-arus-bar-keluar" style="height:${Math.max(4, item.keluar / max * 100)}%" title="Keluar: ${fmt(item.keluar)}"></span></div><small>${esc(item.label)}</small></div>`).join("");
-    document.getElementById("kasArusLegend").innerHTML = '<span><i class="kas-arus-bar-saldo"></i>Saldo</span><span><i class="kas-arus-bar-masuk"></i>Pemasukan</span><span><i class="kas-arus-bar-keluar"></i>Pengeluaran</span>';
+    const legend = document.getElementById("kasArusLegend");
+    if (legend) legend.style.display = "none";
+    const wrap = document.getElementById("kasArusChart");
+    wrap.innerHTML = "";
+    const canvas = document.createElement("canvas");
+    wrap.appendChild(canvas);
+    if (kasArusChartInstance) { kasArusChartInstance.destroy(); kasArusChartInstance = null; }
+    if (typeof Chart === "undefined") return;
+    kasArusChartInstance = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: items.map((item) => item.label),
+        datasets: [
+          { label: "Saldo", data: items.map((item) => item.saldoAkhir), borderColor: "#0d6efd", backgroundColor: "rgba(13,110,253,.1)", fill: true, tension: .3, pointRadius: 4, pointBackgroundColor: "#0d6efd", borderWidth: 2.5 },
+          { label: "Pemasukan", data: items.map((item) => item.masuk), borderColor: "#198754", backgroundColor: "rgba(25,135,84,.08)", fill: false, tension: .3, pointRadius: 3, pointBackgroundColor: "#198754", borderWidth: 2, borderDash: [5, 3] },
+          { label: "Pengeluaran", data: items.map((item) => item.keluar), borderColor: "#dc3545", backgroundColor: "rgba(220,53,69,.08)", fill: false, tension: .3, pointRadius: 3, pointBackgroundColor: "#dc3545", borderWidth: 2, borderDash: [5, 3] }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: "index" },
+        plugins: {
+          legend: { position: "bottom", labels: { usePointStyle: true, padding: 16, font: { weight: "600" } } },
+          tooltip: { backgroundColor: "rgba(0,0,0,.85)", titleFont: { weight: "700" }, bodyFont: { weight: "500" }, padding: 12, cornerRadius: 10, callbacks: { label: (ctx) => ctx.dataset.label + ": Rp " + ctx.raw.toLocaleString("id-ID") } }
+        },
+        scales: {
+          x: { grid: { color: "rgba(0,0,0,.05)" }, ticks: { font: { weight: "600" } } },
+          y: { beginAtZero: false, grid: { color: "rgba(0,0,0,.06)" }, ticks: { callback: (v) => { if (Math.abs(v) >= 1e6) return (v / 1e6).toFixed(1) + "jt"; if (Math.abs(v) >= 1e3) return (v / 1e3) + "rb"; return v; }, font: { weight: "600" } } }
+        }
+      }
+    });
   };
 
   const renderKasArusReport = () => {
