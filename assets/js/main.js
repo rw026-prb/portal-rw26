@@ -996,15 +996,6 @@
     });
   };
 
-  const monthRange = (startMonth, startYear, endMonth, endYear) => {
-    const months = [];
-    for (let year = startYear, month = startMonth; year < endYear || (year === endYear && month <= endMonth); month++) {
-      months.push({ bulan: month, tahun: year });
-      if (month === 11) { month = -1; year++; }
-    }
-    return months;
-  };
-
   const renderKasArus = (items) => {
     const fmt = (n) => "Rp " + Number(n).toLocaleString("id-ID");
     const totalMasuk = items.reduce((sum, item) => sum + item.masuk, 0);
@@ -1058,18 +1049,19 @@
     const btn = document.getElementById("kasArusBtnCari");
     if (startYear > endYear || (startYear === endYear && startMonth > endMonth)) { empty.style.display = "flex"; return; }
     if (!cfg.APPS_SCRIPT_URL) { empty.style.display = "flex"; return; }
-    const months = monthRange(startMonth, startYear, endMonth, endYear);
-    const namaBulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
     loading.style.display = "flex"; box.style.display = "none"; empty.style.display = "none"; btn.disabled = true;
-    Promise.all(months.map(({ bulan, tahun }) => fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=publicKasReport&bulan=${bulan}&tahun=${tahun}`).then((res) => res.ok ? res.json() : Promise.reject())))
-      .then((reports) => {
-        let saldo = 0;
-        const items = reports.map((report, index) => {
-          const data = report.ok ? report : {};
-          saldo = Number(data.saldoAkhir ?? saldo);
-          return { label: `${namaBulan[months[index].bulan]} ${months[index].tahun}`, masuk: Number(data.totalMasuk) || 0, keluar: Number(data.totalKeluar) || 0, saldoAkhir: saldo };
-        });
-        if (!items.some((item) => item.masuk || item.keluar || item.saldoAkhir)) { empty.style.display = "flex"; return; }
+    const url = `${cfg.APPS_SCRIPT_URL}?action=publicKasCashFlow&bulanAwal=${startMonth}&tahunAwal=${startYear}&bulanAkhir=${endMonth}&tahunAkhir=${endYear}`;
+    fetchWithTimeout(url)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Gagal memuat arus kas."))))
+      .then((res) => {
+        const rows = res && res.ok && Array.isArray(res.data) ? res.data : [];
+        const items = rows.map((row) => ({
+          label: String(row.label || "-"),
+          masuk: Number(row.masuk) || 0,
+          keluar: Number(row.keluar) || 0,
+          saldoAkhir: Number(row.saldo) || 0
+        }));
+        if (!items.length || !items.some((item) => item.masuk || item.keluar || item.saldoAkhir)) { empty.style.display = "flex"; return; }
         renderKasArus(items); box.style.display = "block";
       })
       .catch(() => { empty.style.display = "flex"; })
