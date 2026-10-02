@@ -11,6 +11,8 @@ service-account*.json
 
 # Node.js
 node_modules/
+pgdata-*/
+out/
 npm-debug.log*
 
 # Editor / sistem operasi
@@ -19,3 +21,9 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Cadangan dan dump terminal yang pernah ikut ter-commit
+*.baru
+*.name
+# Artefak Supabase CLI
+supabase/.temp/
