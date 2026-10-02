@@ -40,23 +40,27 @@ jobs:
             node --check "$f" && echo "OK: $f"
           done
 
-      - name: Pastikan kunci service_role tidak ikut ter-publish
+      - name: Pastikan kunci akses penuh tidak ikut ter-publish
         # Polanya disusun dari potongan-potongan supaya berkas workflow ini
         # tidak mencocokkan dirinya sendiri. Kalau polanya ditulis utuh,
         # pemeriksaan akan selalu gagal.
+        #
+        # Berkas workflow ini sendiri dikecualikan: isinya hanya konfigurasi
+        # build, bukan berkas yang dikirim ke pengunjung.
         run: |
           set -e
           a='SUPABASE'; b='_SERVICE_ROLE_KEY'
           pola="${a}${b}|sb""_secret_|service""_role.{0,40}eyJ"
-          if grep -rInE "$pola" --exclude-dir=.git .; then
-            echo "::error::Kunci service_role ditemukan. Segera rotasi di dashboard Supabase."
+          if grep -rInE "$pola" --exclude-dir=.git --exclude='uji.yml' .; then
+            echo "::error::Kunci penuh akses ditemukan. Segera rotasi di dashboard Supabase."
             exit 1
           fi
           echo "Aman: hanya kunci anon public yang ada, sesuai desain Supabase."
 
-      - name: Pastikan hanya ada satu token JWT, dan itu anon
-        # Kunci anon dan service_role sama-sama berawalan "eyJ". Yang
-        # membedakan hanya isi payload-nya, jadi payload-nya yang diperiksa.
+      - name: Pastikan semua token yang ada adalah kunci anon
+        # Kunci anon dan kunci akses penuh sama-sama berawalan "eyJ", jadi
+        # bentuknya tidak membedakan. Yang membedakan hanya isi payload-nya,
+        # jadi payload itulah yang diperiksa.
         run: |
           set -e
           node -e "
