@@ -1,0 +1,114 @@
+# ============================================================================
+#  Uji otomatis - Portal Digital RW 26 (website warga)
+# ============================================================================
+#  Situsnya statis tanpa build, jadi tidak ada yang perlu dikompilasi. Yang
+#  diperiksa di sini adalah hal-hal yang bisa merusak halaman secara diam-diam:
+#  sintaks JavaScript yang salah, dan kebocoran kunci yang tidak seharusnya ada.
+#
+#  TIDAK MEMBUTUHKAN SATU PUN SECRET.
+# ============================================================================
+name: Uji
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: uji-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  uji:
+    name: Pengujian
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Ambil kode
+        uses: actions/checkout@v4
+
+      - name: Periksa sintaks JavaScript
+        run: |
+          set -e
+          for f in config.js assets/js/main.js; do
+            node --check "$f" && echo "OK: $f"
+          done
+
+      - name: Pastikan kunci service_role tidak ikut ter-publish
+        # Polanya disusun dari potongan-potongan supaya berkas workflow ini
+        # tidak mencocokkan dirinya sendiri. Kalau polanya ditulis utuh,
+        # pemeriksaan akan selalu gagal.
+        run: |
+          set -e
+          a='SUPABASE'; b='_SERVICE_ROLE_KEY'
+          pola="${a}${b}|sb""_secret_|service""_role.{0,40}eyJ"
+          if grep -rInE "$pola" --exclude-dir=.git .; then
+            echo "::error::Kunci service_role ditemukan. Segera rotasi di dashboard Supabase."
+            exit 1
+          fi
+          echo "Aman: hanya kunci anon public yang ada, sesuai desain Supabase."
+
+      - name: Pastikan hanya ada satu token JWT, dan itu anon
+        # Kunci anon dan service_role sama-sama berawalan "eyJ". Yang
+        # membedakan hanya isi payload-nya, jadi payload-nya yang diperiksa.
+        run: |
+          set -e
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const polaJwt = /eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g;
+            const temuan = [];
+            (function telusuri(d) {
+              for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+                if (e.name === '.git') continue;
+                const p = path.join(d, e.name);
+                if (e.isDirectory()) { telusuri(p); continue; }
+                if (!/\.(js|mjs|html|json|yml|sql)$/i.test(e.name)) continue;
+                const teks = fs.readFileSync(p, 'utf8');
+                for (const m of (teks.match(polaJwt) || [])) {
+                  const muatan = Buffer.from(m.split('.')[1], 'base64').toString('utf8');
+                  if (/service_role/.test(muatan)) temuan.push(p + ' -> service_role');
+                  else if (!/anon/.test(muatan)) temuan.push(p + ' -> role tidak dikenal');
+                }
+              }
+            })('.');
+            if (temuan.length) {
+              console.error('Token bermasalah:\\n  ' + temuan.join('\\n  '));
+              process.exit(1);
+            }
+            console.log('Aman: semua token yang ada adalah kunci anon.');
+          "
+
+      - name: Pastikan config.js punya nilai yang dibutuhkan
+        run: |
+          # Nilai placeholder yang terlupa diisi membuat halaman kosong tanpa
+          # pesan error yang jelas. Lebih baik gagal di sini.
+          #
+          # config.js memakai `window`, jadi diseduhakan dulu sebelum
+          # dimuat ulang oleh Node.
+          node -e "
+            globalThis.window = {};
+            require('./config.js');
+            const c = globalThis.window.RW26_CONFIG || {};
+            const wajib = ['SUPABASE_URL','SUPABASE_ANON_KEY','APPS_SCRIPT_URL'];
+            const kurang = wajib.filter(k => !c[k] || String(c[k]).includes('ISI_DENGAN'));
+            if (kurang.length) {
+              console.error('config.js belum lengkap: ' + kurang.join(', '));
+              process.exit(1);
+            }
+            if (!c.SUPABASE_URL.startsWith('https://')) {
+              console.error('SUPABASE_URL harus diawali https://');
+              process.exit(1);
+            }
+            if (!c.SUPABASE_ANON_KEY.startsWith('eyJ')) {
+              console.error('SUPABASE_ANON_KEY tidak berbentuk kunci Supabase');
+              process.exit(1);
+            }
+            console.log('OK: config.js lengkap (' + wajib.join(', ') + ')');
+          "

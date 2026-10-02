@@ -7,9 +7,57 @@
   const navLinks = [...document.querySelectorAll(".nav-link")];
   const sections = [...document.querySelectorAll("main section[id]")];
   const collapseElement = document.getElementById("navbarMenu");
-  const year = document.getElementById("year");
   let galleryData = [];
   let heroData = [];
+
+  // ==========================================================================
+  //  Dua sumber data
+  // ==========================================================================
+  //  Isian halaman ini sekarang diambil dari dua tempat sekaligus:
+  //
+  //    Supabase     himbauan, pengumuman, fasilitas, organisasi, statistik,
+  //                 serta laporan dan arus kas
+  //    Apps Script  berita, galeri foto, video kegiatan
+  //
+  //  Pemisahan ini disengaja: media tetap di Google Drive (karena Drive hanya
+  //  bisa ditulis lewat Apps Script), sedangkan data teks pindah ke Supabase
+  //  supaya lebih cepat dan aturan aksesnya bisa diatur per baris.
+  //
+  //  Keduanya dikirim BERBEDA. Tidak digabung jadi satu permintaan, karena
+  //  kalau satu sisi lambat, seluruh halaman ikut lambat. Alih-alih, masing-masing
+  //  punya jalur sendiri dan kegagalannya tidak saling menarik.
+  const SUPABASE_OK = typeof cfg.SUPABASE_URL === "string"
+    && cfg.SUPABASE_URL.startsWith("https://")
+    && typeof cfg.SUPABASE_ANON_KEY === "string"
+    && cfg.SUPABASE_ANON_KEY.length > 20;
+
+  const sb = SUPABASE_OK
+    ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY)
+    : null;
+
+  /** Panggil fungsi PostgreSQL (RPC) dan buang galat dalam bentuk Exception. */
+  const sbRpc = async (fn, args = {}) => {
+    if (!sb) throw new Error("Supabase belum dikonfigurasi.");
+    const { data, error } = await sb.rpc(fn, args);
+    if (error) throw new Error(error.message || "Permintaan ditolak database.");
+    return data;
+  };
+
+  // Bentuk kosong. Dipakai saat salah satu sumber gagal: better halaman
+  // menampilkan sebagian konten daripada menampilkan pesan error untuk
+  // seluruh halaman.
+  const EMPTY_CONTENT = {
+    himbauan: [],
+    announcements: [],
+    news: [],
+    facilities: [],
+    organization: { rw: [], posyandu: [], pkk: [], "bank-sampah": [], pokmas: [] },
+    gallery: [],
+    statistik: [],
+    videos: [],
+    videoKegiatan: []
+  };
+
   let lightboxSource = [];
   let currentAlbum = 0;
   let currentPhoto = 0;
@@ -1048,13 +1096,19 @@
     const empty = document.getElementById("kasArusEmptyState");
     const btn = document.getElementById("kasArusBtnCari");
     if (startYear > endYear || (startYear === endYear && startMonth > endMonth)) { empty.style.display = "flex"; return; }
-    if (!cfg.APPS_SCRIPT_URL) { empty.style.display = "flex"; return; }
+    if (!SUPABASE_OK) { empty.style.display = "flex"; return; }
     loading.style.display = "flex"; box.style.display = "none"; empty.style.display = "none"; btn.disabled = true;
-    const url = `${cfg.APPS_SCRIPT_URL}?action=publicKasCashFlow&bulanAwal=${startMonth}&tahunAwal=${startYear}&bulanAkhir=${endMonth}&tahunAkhir=${endYear}`;
-    fetchWithTimeout(url)
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Gagal memuat arus kas."))))
+    // Bulan dikirim 0-indexed (0=Januari) karena itulah angka yang dipakai
+    // <select> di halaman. Fungsi kas_cash_flow() di database yang
+    // menerjemahkannya ke 1-indexed.
+    sbRpc("kas_cash_flow", {
+      p_bulan_awal: startMonth,
+      p_tahun_awal: startYear,
+      p_bulan_akhir: endMonth,
+      p_tahun_akhir: endYear
+    })
       .then((res) => {
-        const rows = res && res.ok && Array.isArray(res.data) ? res.data : [];
+        const rows = res && Array.isArray(res.data) ? res.data : [];
         const items = rows.map((row) => ({
           label: String(row.label || "-"),
           masuk: Number(row.masuk) || 0,
@@ -1123,18 +1177,17 @@
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Memuat'; }
     }
 
-    if (!cfg.APPS_SCRIPT_URL) {
+    if (!SUPABASE_OK) {
       if (loading) loading.style.display = "none";
       if (emptyState) emptyState.style.display = "flex";
       if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-search"></i> Cari'; }
       return;
     }
 
-    fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=publicKasReport&bulan=${encodeURIComponent(bulan)}&tahun=${encodeURIComponent(tahun)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Gagal memuat laporan.");
-        return res.json();
-      })
+    // Bulan dikirim 0-indexed (0=Januari) - sama seperti nilai <select> di
+    // halaman. Fungsi kas_report() di database yang menerjemahkannya ke
+    // 1-indexed sebelum dibandingkan dengan data.
+    sbRpc("kas_report", { p_bulan: bulan, p_tahun: tahun })
       .then((data) => {
         if (!background) {
           if (loading) loading.style.display = "none";
@@ -1337,7 +1390,11 @@
     return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
   };
 
-  const CACHE_VERSION = "v1";
+  // Naikkan versinya setiap kali bentuk isi yang disimpan berubah. v1 berisi
+  // hasil dari satu sumber saja (Apps Script), sedangkan v2 berisi gabungan
+  // Apps Script + Supabase. Tanpa kenaikan ini, pengunjung yang sudah pernah
+  // membuka situs akan melihat halaman kosong dari cache lama.
+  const CACHE_VERSION = "v2";
   const CACHE_TTL_CONTENT = 15 * 60 * 1000;
   const CACHE_TTL_KAS = 30 * 60 * 1000;
 
@@ -1399,8 +1456,12 @@
   const loadPublicContent = (force = false) => {
     removeErrorBanner();
 
+    if (!SUPABASE_OK) {
+      renderErrorState("Konfigurasi Supabase belum diisi pada config.js. Hubungi pengurus RW.", { retry: true });
+      return;
+    }
     if (!cfg.APPS_SCRIPT_URL) {
-      renderErrorState("Konfigurasi data tidak tersedia. Hubungi pengurus RW.", { retry: true });
+      renderErrorState("Konfigurasi galeri belum tersedia. Hubungi pengurus RW.", { retry: true });
       return;
     }
 
@@ -1421,22 +1482,51 @@
     fetchPublicContent(cacheKey, false);
   };
 
+  /**
+   * Ambil isi halaman dari kedua sumber, lalu gabungkan.
+   *
+   * Kegagalan satu sumber TIDAK membatalkan sumber yang lain. Kalau galeri
+   * tidaktermuat, berita, statistik, dan laporan kas tetap tampil - dan
+   * sebaliknya. Ini penting karena keduanya benar-benar tidak bergantung.
+   *
+   * `renderContent()` sudah dibungkus try/catch per-fungsi, jadi penggabungan
+   * di sini cukup menyertakan bentuk kosong untuk kunci yang hilang.
+   */
   const fetchPublicContent = (cacheKey, background, attempt = 1) => {
-    const action = encodeURIComponent(cfg.PUBLIC_ACTION || "publicContent");
     const maxRetry = 3;
-    fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=${action}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Gagal memuat data publik.");
-        return res.json();
-      })
-      .then((data) => {
-        if (data?.ok) {
-          removeErrorBanner();
-          renderContent(data);
-          cacheWrite(cacheKey, data);
-        } else {
-          throw new Error(data?.error || "Data tidak valid.");
+    const action = encodeURIComponent(cfg.PUBLIC_ACTION || "publicContent");
+
+    const dariSupabase = sbRpc("get_public_content", {})
+      .catch((e) => {
+        console.warn("Supabase tidak dapat dibaca:", e.message);
+        return null;
+      });
+
+    const dariAppsScript = (cfg.APPS_SCRIPT_URL
+      ? fetchWithTimeout(`${cfg.APPS_SCRIPT_URL}?action=${action}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Server berita dan galeri tidak merespons.");
+          return res.json();
+        })
+        .catch((e) => {
+          console.warn("Apps Script tidak dapat dibaca:", e.message);
+          return null;
+        })
+      : Promise.resolve(null));
+
+    Promise.all([dariSupabase, dariAppsScript])
+      .then(([supa, apps]) => {
+        if (!supa && !apps) {
+          throw new Error("Sumber data tidak dapat diakses. Periksa koneksi internet.");
         }
+        const gabung = {
+          ...EMPTY_CONTENT,
+          ...(apps && apps.ok ? apps : {}),
+          ...(supa || {})
+        };
+        removeErrorBanner();
+        renderContent(gabung);
+        cacheWrite(cacheKey, gabung);
       })
       .catch((err) => {
         if (background) {
@@ -1491,9 +1581,20 @@
     els.forEach((el) => observer.observe(el));
   };
 
+  /**
+   * Catat satu kunjungan ke tabel visitor_log.
+   *
+   * Sekarang ditulis langsung ke Supabase, bukan lewat Apps Script. Peran
+   * `anon` hanya punya hak INSERT di tabel ini - tidak bisa membacanya. Jadi
+   * catatan kunjungan tetap bisa dikumpulkan tanpa membuka isi log ke publik.
+   *
+   * Batas 15 menit per perangkat disimpan di localStorage, sama seperti
+   * sebelumnya. Pengunjung yang menghapus localStorage akan tercatat lagi,
+   * sama seperti dulu.
+   */
   const logPublicVisitor = () => {
     try {
-      if (!cfg.APPS_SCRIPT_URL) return;
+      if (!sb) return;
       const now = Date.now();
       const last = parseInt(localStorage.getItem("rw26_vlog_ts") || "0", 10);
       if (last && now - last < 15 * 60 * 1000) return;
@@ -1501,21 +1602,19 @@
       try { sid = sessionStorage.getItem("rw26_vid") || ""; } catch {}
       if (!sid) { sid = Math.random().toString(36).slice(2) + now.toString(36); try { sessionStorage.setItem("rw26_vid", sid); } catch {} }
       localStorage.setItem("rw26_vlog_ts", String(now));
-      const payload = JSON.stringify({
-        action: "logVisitor",
-        page: location.pathname + location.hash || "/",
+
+      // Tanggal memakai zona waktu Jakarta, sama dengan yang ditulis kode
+      // Apps Script dulu, supaya grafik 14 hari di dasbor tidak bergeser.
+      const tgl = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
+      sb.from("visitor_log").insert({
+        tanggal: tgl,
+        page: (location.pathname + location.hash) || "/",
         referrer: document.referrer || "",
         ua: navigator.userAgent.slice(0, 400),
         bahasa: navigator.language || "",
         screen: (screen.width + "x" + screen.height),
-        sessionId: sid
-      });
-      if (navigator.sendBeacon) {
-        const blob = new Blob([payload], { type: "text/plain;charset=utf-8" });
-        navigator.sendBeacon(cfg.APPS_SCRIPT_URL, blob);
-      } else {
-        fetch(cfg.APPS_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: payload, keepalive: true }).catch(() => {});
-      }
+        session_id: sid.slice(0, 60)
+      }).then(({ error }) => { if (error) console.warn("Log pengunjung gagal:", error.message); });
     } catch {}
   };
 
